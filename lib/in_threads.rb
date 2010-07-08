@@ -27,7 +27,7 @@ private
 
   def run_in_threads(method, *args, &block)
     @object.send(method, *args) do |*args|
-      if @threads.count(&:alive?) >= @max_threads
+      while @threads.count(&:alive?) >= @max_threads
         ThreadsWait.new(*@threads).next_wait
       end
       @threads << Thread.new(*args, &block)

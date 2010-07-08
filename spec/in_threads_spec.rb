@@ -19,6 +19,20 @@ describe InThreads do
     @a.in_threads.each(&:hello)
   end
 
+  it "should not run simulanteously more threads" do
+    @mutex = Mutex.new
+    @threads = 0
+    (1..100).to_a.in_threads(10).each do |i|
+      (0..10).include?(@threads).should be_true
+      @mutex.synchronize{ @threads += 1 }
+      (0..10).include?(@threads).should be_true
+      sleep 1 + rand * 1
+      (0..10).include?(@threads).should be_true
+      @mutex.synchronize{ @threads -= 1 }
+      (0..10).include?(@threads).should be_true
+    end
+  end
+
   it "should run faster than without threads" do
     (measure{ @a.in_threads.each(&@sleepy_prock) } * 2).should be < measure{ @a.each(&@sleepy_prock) }
   end
