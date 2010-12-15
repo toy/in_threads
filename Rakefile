@@ -1,34 +1,25 @@
-begin
-  require 'jeweler'
+require 'rake'
+require 'jeweler'
+require 'rake/gem_ghost_task'
+require 'rspec/core/rake_task'
 
-  name = 'in_threads'
-  summary = 'Execute ruby blocks in parallel'
+name = 'in_threads'
 
-  jewel = Jeweler::Tasks.new do |j|
-    j.name = name
-    j.summary = summary
-    j.homepage = "http://github.com/toy/#{name}"
-    j.authors = ['Ivan Kuchin']
-  end
-
-  Jeweler::GemcutterTasks.new
-
-  require 'pathname'
-  desc "Replace system gem with symlink to this folder"
-  task 'ghost' do
-    gem_path = Pathname(Gem.searcher.find(name).full_gem_path)
-    current_path = Pathname('.').expand_path
-    system('rm', '-r', gem_path)
-    system('ln', '-s', current_path, gem_path)
-  end
-
-rescue LoadError
-  puts "Jeweler (or a dependency) not available. Install it with: gem install jeweler"
+Jeweler::Tasks.new do |gem|
+  gem.name = name
+  gem.summary = %Q{Execute ruby blocks in parallel}
+  gem.homepage = "http://github.com/toy/#{name}"
+  gem.license = 'MIT'
+  gem.authors = ['Ivan Kuchin']
+  gem.add_development_dependency 'jeweler', '~> 1.5.1'
+  gem.add_development_dependency 'rake-gem-ghost'
+  gem.add_development_dependency 'rspec'
 end
+Jeweler::RubygemsDotOrgTasks.new
+Rake::GemGhostTask.new
 
-require 'spec/rake/spectask'
-Spec::Rake::SpecTask.new(:spec) do |spec|
-  spec.libs << 'lib' << 'spec'
-  spec.spec_files = FileList['spec/**/*_spec.rb']
+RSpec::Core::RakeTask.new(:spec) do |spec|
+  spec.rspec_opts = ['--colour --format progress']
+  spec.pattern = 'spec/**/*_spec.rb'
 end
 task :default => :spec
