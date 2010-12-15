@@ -1,7 +1,0 @@
-Manifest
-README.rdoc
-Rakefile
-VERSION.yml
-lib/in_threads.rb
-spec/in_threads_spec.rb
-spec/spec_helper.rb
