@@ -8,7 +8,7 @@ begin
     j.name = name
     j.summary = summary
     j.homepage = "http://github.com/toy/#{name}"
-    j.authors = ["Boba Fat"]
+    j.authors = ['Ivan Kuchin']
   end
 
   Jeweler::GemcutterTasks.new
