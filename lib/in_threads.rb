@@ -9,6 +9,7 @@ module Enumerable
 end
 
 # TODO: create my own ThreadsWait with blackjack and hookers
+# TODO: create class methods for setting type of method
 
 class InThreads
   (
