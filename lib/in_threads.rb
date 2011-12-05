@@ -108,6 +108,7 @@ private
               ThreadsWait.new(*threads).next_wait
             end
           end
+          break if Thread.current[:stop]
           thread = Thread.new(object, &block)
           threads << thread
           queue << thread
@@ -120,6 +121,7 @@ private
       queue.pop.value
     end
   ensure
-    runner.kill
+    runner[:stop] = true
+    runner.join
   end
 end
