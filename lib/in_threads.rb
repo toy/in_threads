@@ -10,6 +10,8 @@ end
 
 # TODO: create my own ThreadsWait with blackjack and hookers
 # TODO: create class methods for setting type of method
+# TODO: run_in_threads_inconsecutive for `all?`, `any?`, `none?` and `one?`
+# TODO: ruby1.9.3 methods
 
 class InThreads
   (
