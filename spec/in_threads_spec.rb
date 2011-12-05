@@ -50,7 +50,7 @@ end
 
 describe "in_threads" do
   let(:enum){ 30.times.map{ |i| Item.new(i) } }
-  let(:speed_coef){ 0.75 } # small coefficient, should be more if sleep time coefficient is bigger
+  let(:speed_coef){ 0.666 } # small coefficient, should be more if sleep time coefficient is bigger
 
   def measure
     start = Time.now
