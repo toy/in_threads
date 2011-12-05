@@ -79,7 +79,7 @@ class InThreads
   ].each do |name|
     class_eval <<-RUBY
       def #{name}(*args, &block)
-        enumerable.#{name}(*args, &block)
+        run_without_threads(enumerable, :#{name}, *args, &block)
       end
     RUBY
   end
@@ -135,5 +135,9 @@ private
     else
       enumerable.send(method, *args)
     end
+  end
+
+  def run_without_threads(enumerable, method, *args, &block)
+    enumerable.send(method, *args, &block)
   end
 end
