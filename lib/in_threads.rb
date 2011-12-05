@@ -41,11 +41,8 @@ class InThreads
     RUBY
   end
 
-  def reverse_each(*args, &block)
-    @enumerable.reverse_each(*args, &block)
-  end
-
   %w[
+    reverse_each
     each_with_index enum_with_index
     each_cons each_slice enum_cons enum_slice
     zip
