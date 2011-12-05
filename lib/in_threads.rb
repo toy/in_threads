@@ -11,7 +11,8 @@ end
 # TODO: create my own ThreadsWait with blackjack and hookers
 # TODO: create class methods for connecting Enumerable method to runner
 # TODO: run_in_threads_inconsecutive for `all?`, `any?`, `none?` and `one?`
-# TODO: ruby1.9.3 methods
+# TODO: all ruby1.9.3 methods
+# TODO: better way of handling grep?
 
 class InThreads
   (
