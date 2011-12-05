@@ -59,7 +59,11 @@ class InThreads
   end
 
   def grep(*args, &block)
-    enumerable.grep(*args, &block)
+    if block
+      run_in_threads_consecutive(enumerable.grep(*args), :map, &block)
+    else
+      enumerable.grep(*args)
+    end
   end
 
   %w[
