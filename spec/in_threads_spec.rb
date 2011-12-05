@@ -62,6 +62,10 @@ describe "in_threads" do
     Time.now - start
   end
 
+  it "should define all Enumerable methods" do
+    (Enumerable.instance_methods - 10.times.in_threads.class.instance_methods).should == []
+  end
+
   describe "in_threads" do
     it "should not change existing instance" do
       threaded = enum.in_threads(10)
