@@ -9,7 +9,6 @@ module Enumerable
 end
 
 # TODO: create my own ThreadsWait with blackjack and hookers?
-# TODO: create class methods for connecting Enumerable method to runner
 # TODO: run_in_threads_inconsecutive for `all?`, `any?`, `none?` and `one?`
 # TODO: all ruby1.9.3 methods
 # TODO: better way of handling grep?
@@ -33,33 +32,40 @@ class InThreads
     self.class.new(enumerable, thread_count, &block)
   end
 
-  %w[
+  def self.use(connections)
+    connections.each do |runner, methods|
+      methods.each do |method|
+        class_eval <<-RUBY
+          def #{method}(*args, &block)
+            #{runner}(enumerable, :#{method}, *args, &block)
+          end
+        RUBY
+      end
+    end
+  end
+
+  use :run_in_threads_consecutive => %w[
     each
     all? any? none? one?
     detect find find_index drop_while take_while
     partition find_all select reject count
     collect map group_by max_by min_by minmax_by sort_by
-  ].each do |name|
-    class_eval <<-RUBY
-      def #{name}(*args, &block)
-        run_in_threads_consecutive(enumerable, :#{name}, *args, &block)
-      end
-    RUBY
-  end
-
-  %w[
+  ],
+  :run_in_threads_block_result_irrelevant => %w[
     reverse_each
     each_with_index enum_with_index
     each_cons each_slice enum_cons enum_slice
     zip
     cycle
-  ].each do |name|
-    class_eval <<-RUBY
-      def #{name}(*args, &block)
-        run_in_threads_block_result_irrelevant(enumerable, :#{name}, *args, &block)
-      end
-    RUBY
-  end
+  ],
+  :run_without_threads => %w[
+    inject reduce
+    max min minmax sort
+    entries to_a
+    drop take
+    first
+    include? member?
+  ]
 
   def grep(*args, &block)
     if block
@@ -67,21 +73,6 @@ class InThreads
     else
       enumerable.grep(*args)
     end
-  end
-
-  %w[
-    inject reduce
-    max min minmax sort
-    entries to_a
-    drop take
-    first
-    include? member?
-  ].each do |name|
-    class_eval <<-RUBY
-      def #{name}(*args, &block)
-        run_without_threads(enumerable, :#{name}, *args, &block)
-      end
-    RUBY
   end
 
 private
