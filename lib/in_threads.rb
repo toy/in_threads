@@ -27,19 +27,12 @@ class InThreads
     self.class.new(@enumerable, thread_count, &block)
   end
 
-  %w[each_with_index enum_with_index].each do |name|
-    class_eval <<-RUBY
-      def #{name}(*args, &block)
-        @enumerable.#{name}(*args, &block)
-      end
-    RUBY
-  end
-
   def reverse_each(*args, &block)
     @enumerable.reverse_each(*args, &block)
   end
 
   %w[
+    each_with_index enum_with_index
     each_cons each_slice enum_cons enum_slice
     zip
     cycle
@@ -84,9 +77,9 @@ private
     if block
       waiter = ThreadsWait.new
       begin
-        @enumerable.send(method, *args) do |object|
+        @enumerable.send(method, *args) do |*block_args|
           waiter.next_wait if waiter.threads.length >= thread_count
-          waiter.join_nowait([Thread.new(object, &block)])
+          waiter.join_nowait([Thread.new(*block_args, &block)])
         end
       ensure
         waiter.all_waits
