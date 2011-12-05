@@ -58,6 +58,23 @@ describe InThreads do
     Time.now - start
   end
 
+  describe "in_threads" do
+    it "should not change existing instance" do
+      threaded = enum.in_threads(10)
+      proc{ threaded.in_threads(20) }.should_not change(threaded, :thread_count)
+    end
+
+    it "should create new instance with different title when called on WithProgress" do
+      threaded = enum.in_threads(10)
+      tthreaded = threaded.in_threads(20)
+      threaded.thread_count.should == 10
+      tthreaded.thread_count.should == 20
+      tthreaded.class.should == threaded.class
+      tthreaded.object_id.should_not == threaded.object_id
+      tthreaded.enumerable.should == threaded.enumerable
+    end
+  end
+
   describe "each" do
     it "should return same enum after running" do
       enum.in_threads.each(&:value).should == enum
@@ -78,23 +95,6 @@ describe InThreads do
 
     it "should return same enum without block" do
       enum.in_threads.each.to_a.should == enum.each.to_a
-    end
-  end
-
-  describe "in_threads" do
-    it "should not change existing instance" do
-      threaded = enum.in_threads(10)
-      proc{ threaded.in_threads(20) }.should_not change(threaded, :thread_count)
-    end
-
-    it "should create new instance with different title when called on WithProgress" do
-      threaded = enum.in_threads(10)
-      tthreaded = threaded.in_threads(20)
-      threaded.thread_count.should == 10
-      tthreaded.thread_count.should == 20
-      tthreaded.class.should == threaded.class
-      tthreaded.object_id.should_not == threaded.object_id
-      tthreaded.enumerable.should == threaded.enumerable
     end
   end
 
