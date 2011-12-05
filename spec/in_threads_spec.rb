@@ -48,7 +48,7 @@ class ValueItem < Item
   end
 end
 
-describe InThreads do
+describe "in_threads" do
   let(:enum){ 30.times.map{ |i| Item.new(i) } }
   let(:speed_coef){ 0.75 } # small coefficient, should be more if sleep time coefficient is bigger
 
