@@ -14,6 +14,7 @@ end
 # TODO: all ruby1.9.3 methods
 # TODO: better way of handling grep?
 # TODO: check method presence if Enumerable before connectin to runner
+# TODO: documentation
 
 class InThreads
   (
