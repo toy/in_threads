@@ -27,7 +27,7 @@ class InThreads
   end
 
   def in_threads(thread_count = 10, &block)
-    self.class.new(@enumerable, thread_count, &block)
+    self.class.new(enumerable, thread_count, &block)
   end
 
   %w[
@@ -39,7 +39,7 @@ class InThreads
   ].each do |name|
     class_eval <<-RUBY
       def #{name}(*args, &block)
-        run_in_threads_consecutive(:#{name}, *args, &block)
+        run_in_threads_consecutive(enumerable, :#{name}, *args, &block)
       end
     RUBY
   end
@@ -53,13 +53,13 @@ class InThreads
   ].each do |name|
     class_eval <<-RUBY
       def #{name}(*args, &block)
-        run_in_threads_block_result_irrelevant(:#{name}, *args, &block)
+        run_in_threads_block_result_irrelevant(enumerable, :#{name}, *args, &block)
       end
     RUBY
   end
 
   def grep(*args, &block)
-    @enumerable.grep(*args, &block)
+    enumerable.grep(*args, &block)
   end
 
   %w[
@@ -72,18 +72,18 @@ class InThreads
   ].each do |name|
     class_eval <<-RUBY
       def #{name}(*args, &block)
-        @enumerable.#{name}(*args, &block)
+        enumerable.#{name}(*args, &block)
       end
     RUBY
   end
 
 private
 
-  def run_in_threads_block_result_irrelevant(method, *args, &block)
+  def run_in_threads_block_result_irrelevant(enumerable, method, *args, &block)
     if block
       waiter = ThreadsWait.new
       begin
-        @enumerable.send(method, *args) do |*block_args|
+        enumerable.send(method, *args) do |*block_args|
           waiter.next_wait if waiter.threads.length >= thread_count
           waiter.join_nowait([Thread.new(*block_args, &block)])
         end
@@ -91,18 +91,18 @@ private
         waiter.all_waits
       end
     else
-      @enumerable.send(method, *args)
+      enumerable.send(method, *args)
     end
   end
 
-  def run_in_threads_consecutive(method, *args, &block)
+  def run_in_threads_consecutive(enumerable, method, *args, &block)
     if block
       begin
         queue = Queue.new
-        runner = Thread.new do
+        runner = Thread.new(enumerable) do |enumerable|
           threads = []
           begin
-            @enumerable.each do |object|
+            enumerable.each do |object|
               if threads.length >= thread_count
                 threads = threads.select(&:alive?)
                 if threads.length >= thread_count
@@ -118,7 +118,7 @@ private
             threads.map(&:join)
           end
         end
-        @enumerable.send(method, *args) do |*block_args|
+        enumerable.send(method, *args) do |*block_args|
           queue.pop.value
         end
       ensure
@@ -126,7 +126,7 @@ private
         runner.join
       end
     else
-      @enumerable.send(method, *args)
+      enumerable.send(method, *args)
     end
   end
 end
