@@ -13,7 +13,7 @@ class Item
   end
 
   def work
-    sleep @rand * 0.005
+    sleep @rand * 0.008
   end
 
   def value
@@ -46,6 +46,10 @@ class ValueItem < Item
   def check?
     !!value
   end
+end
+
+def enum_methods(methods)
+  (Enumerable.instance_methods.map(&:to_s) & methods)
 end
 
 describe "in_threads" do
@@ -98,7 +102,7 @@ describe "in_threads" do
     end
   end
 
-  %w[each_with_index enum_with_index].each do |method|
+  enum_methods(%w[each_with_index enum_with_index]).each do |method|
     describe method do
       let(:runner){ proc{ |o, i| o.value } }
 
@@ -216,7 +220,7 @@ describe "in_threads" do
     end
   end
 
-  %w[each_cons enum_slice each_slice enum_cons].each do |method|
+  enum_methods(%w[each_cons each_slice enum_slice enum_cons]).each do |method|
     describe method do
       let(:runner){ proc{ |a| a.each(&:value) } }
 

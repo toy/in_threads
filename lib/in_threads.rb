@@ -13,6 +13,7 @@ end
 # TODO: run_in_threads_inconsecutive for `all?`, `any?`, `none?` and `one?`
 # TODO: all ruby1.9.3 methods
 # TODO: better way of handling grep?
+# TODO: check method presence if Enumerable before connectin to runner
 
 class InThreads
   (
