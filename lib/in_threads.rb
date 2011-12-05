@@ -46,7 +46,7 @@ class InThreads
   ].each do |name|
     class_eval <<-RUBY
       def #{name}(*args, &block)
-        run_in_threads_resultless(:#{name}, *args, &block)
+        run_in_threads_block_result_irrelevant(:#{name}, *args, &block)
       end
     RUBY
   end
@@ -80,7 +80,7 @@ class InThreads
 
 private
 
-  def run_in_threads_resultless(method, *args, &block)
+  def run_in_threads_block_result_irrelevant(method, *args, &block)
     if block
       waiter = ThreadsWait.new
       begin
