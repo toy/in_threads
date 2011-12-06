@@ -112,6 +112,24 @@ describe "in_threads" do
     it "should return same enum without block" do
       enum.in_threads.each.to_a.should == enum.each.to_a
     end
+
+    it "should run in specified number of threads" do
+      enum = 100.times.map{ |i| Item.new(i) }
+
+      @thread_count = 0
+      @mutex = Mutex.new
+      enum.in_threads(13).each do |o|
+        @mutex.synchronize do
+          @thread_count += 1
+          @thread_count.should <= 13
+        end
+        o.work
+        @mutex.synchronize do
+          @thread_count -= 1
+        end
+      end
+      @thread_count.should == 0
+    end
   end
 
   %w[each_with_index enum_with_index].each do |method|
