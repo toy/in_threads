@@ -53,7 +53,7 @@ class InThreads
     end
   end
 
-  use :run_in_threads_consecutive, :for => %w[each]
+  use :run_in_threads_block_result_irrelevant, :for => %w[each]
   use :run_in_threads_consecutive, :for => %w[
     all? any? none? one?
     detect find find_index drop_while take_while
