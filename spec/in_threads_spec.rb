@@ -98,7 +98,7 @@ describe "in_threads" do
 
     it "should execute block for each element" do
       enum.each{ |o| o.should_receive(:touch).once }
-      enum.in_threads.each(&:touch)
+      enum.in_threads.each(&:touch_n_value)
     end
 
     it "should run faster with threads" do
@@ -143,14 +143,14 @@ describe "in_threads" do
     end
 
     it "should fire same objects in reverse order" do
-      @order = mock('order', :touch => nil)
-      @order.should_receive(:touch).with(enum.last).ordered
-      @order.should_receive(:touch).with(enum[enum.length / 2]).ordered
-      @order.should_receive(:touch).with(enum.first).ordered
+      @order = mock('order', :notify => nil)
+      @order.should_receive(:notify).with(enum.last).ordered
+      @order.should_receive(:notify).with(enum[enum.length / 2]).ordered
+      @order.should_receive(:notify).with(enum.first).ordered
       enum.reverse_each{ |o| o.should_receive(:touch).once }
       @mutex = Mutex.new
       enum.in_threads.reverse_each do |o|
-        @mutex.synchronize{ @order.touch(o) }
+        @mutex.synchronize{ @order.notify(o) }
         o.touch_n_value
       end
     end
