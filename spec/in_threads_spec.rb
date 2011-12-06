@@ -16,6 +16,10 @@ class Item
     sleep @rand * 0.008
   end
 
+  def work_more
+    sleep @rand * 0.1
+  end
+
   def value
     work; @rand
   end
@@ -117,18 +121,20 @@ describe "in_threads" do
       enum = 100.times.map{ |i| Item.new(i) }
 
       @thread_count = 0
+      @max_thread_count = 0
       @mutex = Mutex.new
       enum.in_threads(13).each do |o|
         @mutex.synchronize do
           @thread_count += 1
-          @thread_count.should <= 13
+          @max_thread_count = [@max_thread_count, @thread_count].max
         end
-        o.work
+        o.work_more
         @mutex.synchronize do
           @thread_count -= 1
         end
       end
       @thread_count.should == 0
+      @max_thread_count.should == 13
     end
   end
 
