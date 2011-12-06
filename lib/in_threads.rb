@@ -120,7 +120,7 @@ private
             waiter.all_waits
           end
         end
-        enumerable.send(method, *args) do |*block_args|
+        enumerable.send(method, *args) do |object|
           queue.pop.value
         end
       ensure
