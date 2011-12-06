@@ -12,7 +12,6 @@ end
 # TODO: run_in_threads_inconsecutive for `all?`, `any?`, `none?` and `one?`
 # TODO: all ruby1.9.3 methods
 # TODO: better way of handling grep?
-# TODO: check method presence if Enumerable before connectin to runner
 # TODO: documentation
 
 class InThreads
@@ -32,40 +31,50 @@ class InThreads
     self.class.new(enumerable, thread_count, &block)
   end
 
-  def self.use(connections)
-    connections.each do |runner, methods|
+  class << self
+    def enumerable_methods
+      Enumerable.instance_methods.map(&:to_s)
+    end
+
+    def use(runner, options)
+      methods = Array(options[:for])
+      raise 'no methods provided using :for option' if methods.empty?
+      ignore_undefined = options[:ignore_undefined]
+      enumerable_methods = self.enumerable_methods
       methods.each do |method|
-        class_eval <<-RUBY
-          def #{method}(*args, &block)
-            #{runner}(enumerable, :#{method}, *args, &block)
-          end
-        RUBY
+        unless ignore_undefined && !enumerable_methods.include?(method)
+          class_eval <<-RUBY
+            def #{method}(*args, &block)
+              #{runner}(enumerable, :#{method}, *args, &block)
+            end
+          RUBY
+        end
       end
     end
   end
 
-  use :run_in_threads_consecutive => %w[
-    each
+  use :run_in_threads_consecutive, :for => %w[each]
+  use :run_in_threads_consecutive, :for => %w[
     all? any? none? one?
     detect find find_index drop_while take_while
     partition find_all select reject count
     collect map group_by max_by min_by minmax_by sort_by
-  ],
-  :run_in_threads_block_result_irrelevant => %w[
+  ], :ignore_undefined => true
+  use :run_in_threads_block_result_irrelevant, :for => %w[
     reverse_each
     each_with_index enum_with_index
     each_cons each_slice enum_cons enum_slice
     zip
     cycle
-  ],
-  :run_without_threads => %w[
+  ], :ignore_undefined => true
+  use :run_without_threads, :for => %w[
     inject reduce
     max min minmax sort
     entries to_a
     drop take
     first
     include? member?
-  ]
+  ], :ignore_undefined => true
 
   def grep(*args, &block)
     if block

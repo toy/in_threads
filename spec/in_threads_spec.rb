@@ -48,8 +48,16 @@ class ValueItem < Item
   end
 end
 
-def enum_methods(methods)
-  (Enumerable.instance_methods.map(&:to_s) & methods)
+def describe_enum_method(method, &block)
+  @enum_methods ||= Enumerable.instance_methods.map(&:to_s)
+  if @enum_methods.include?(method)
+    describe(method, &block)
+  else
+    it "should not be defined" do
+      exception_regexp = /^undefined method `#{Regexp.escape(method)}' for #<InThreads:0x[0-9a-f]+>$/
+      proc{ enum.in_threads.send(method) }.should raise_error(NoMethodError, exception_regexp)
+    end
+  end
 end
 
 describe "in_threads" do
@@ -98,7 +106,7 @@ describe "in_threads" do
     end
 
     it "should run faster with more threads" do
-      measure{ enum.in_threads(20).each(&:work) }.should < measure{ enum.in_threads(2).each(&:work) } * speed_coef
+      measure{ enum.in_threads(10).each(&:work) }.should < measure{ enum.in_threads(2).each(&:work) } * speed_coef
     end
 
     it "should return same enum without block" do
@@ -106,8 +114,8 @@ describe "in_threads" do
     end
   end
 
-  enum_methods(%w[each_with_index enum_with_index]).each do |method|
-    describe method do
+  %w[each_with_index enum_with_index].each do |method|
+    describe_enum_method method do
       let(:runner){ proc{ |o, i| o.value } }
 
       it "should return same result with threads" do
@@ -224,8 +232,8 @@ describe "in_threads" do
     end
   end
 
-  enum_methods(%w[each_cons each_slice enum_slice enum_cons]).each do |method|
-    describe method do
+  %w[each_cons each_slice enum_slice enum_cons].each do |method|
+    describe_enum_method method do
       let(:runner){ proc{ |a| a.each(&:value) } }
 
       it "should fire same objects" do
