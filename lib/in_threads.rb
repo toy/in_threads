@@ -106,23 +106,18 @@ private
     if block
       begin
         queue = Queue.new
-        runner = Thread.new(enumerable) do |enumerable|
-          threads = []
+        runner = Thread.new do
+          waiter = ThreadsWait.new
           begin
             enumerable.each do |object|
-              if threads.length >= thread_count
-                threads = threads.select(&:alive?)
-                if threads.length >= thread_count
-                  ThreadsWait.new(*threads).next_wait
-                end
-              end
+              waiter.next_wait if waiter.threads.length >= thread_count
               break if Thread.current[:stop]
               thread = Thread.new(object, &block)
-              threads << thread
+              waiter.join_nowait([thread])
               queue << thread
             end
           ensure
-            threads.map(&:join)
+            waiter.all_waits
           end
         end
         enumerable.send(method, *args) do |*block_args|
