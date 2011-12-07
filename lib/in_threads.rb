@@ -94,6 +94,7 @@ class InThreads
     each_cons each_slice enum_cons enum_slice
     zip
     cycle
+    each_entry
   ], :ignore_undefined => true
   use :run_without_threads, :for => %w[
     inject reduce

@@ -357,6 +357,44 @@ describe "in_threads" do
     end
   end
 
+  describe_enum_method "each_entry" do
+    class EachEntryYielder
+      include Enumerable
+      def each
+        10.times{ yield 1 }
+        10.times{ yield 2, 3 }
+        10.times{ yield }
+      end
+    end
+
+    let(:enum){ EachEntryYielder.new }
+    let(:runner){ proc{ |o| ValueItem.new(0, o).work } }
+
+    it "should return same result with threads" do
+      enum.in_threads.each_entry(&runner).should == enum.each_entry(&runner)
+    end
+
+    it "should execute block for each element" do
+      @order = mock('order')
+      @order.should_receive(:notify).with(1).exactly(10).times.ordered
+      @order.should_receive(:notify).with([2, 3]).exactly(10).times.ordered
+      @order.should_receive(:notify).with(nil).exactly(10).times.ordered
+      @mutex = Mutex.new
+      enum.in_threads.each_entry do |o|
+        @mutex.synchronize{ @order.notify(o) }
+        runner[]
+      end
+    end
+
+    it "should run faster with threads" do
+      measure{ enum.in_threads.each_entry(&runner) }.should < measure{ enum.each_entry(&runner) } * speed_coef
+    end
+
+    it "should return same enum without block" do
+      enum.in_threads.each_entry.to_a.should == enum.each_entry.to_a
+    end
+  end
+
   context "unthreaded" do
     %w[inject reduce].each do |method|
       describe method do
