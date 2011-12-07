@@ -102,6 +102,7 @@ class InThreads
     drop take
     first
     include? member?
+    each_with_object
   ], :ignore_undefined => true
 
   # Special case method, works by applying <tt>run_in_threads_consecutive</tt> with map on enumerable returned by blockless run

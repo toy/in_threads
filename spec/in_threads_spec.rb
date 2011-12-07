@@ -408,5 +408,13 @@ describe "in_threads" do
         end
       end
     end
+
+    describe_enum_method "each_with_object" do
+      let(:runner){ proc{ |o, h| h[o.value] = true } }
+
+      it "should return same result" do
+        enum.in_threads.each_with_object({}, &runner).should == enum.each_with_object({}, &runner)
+      end
+    end
   end
 end
