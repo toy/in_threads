@@ -78,6 +78,26 @@ describe "in_threads" do
   #   (Enumerable.instance_methods - 10.times.in_threads.class.instance_methods).should == []
   # end
 
+  describe "verifying params" do
+    it "should complain about using with non enumerable" do
+      proc{ InThreads.new(1) }.should raise_error(ArgumentError)
+    end
+
+    [1..10, 10.times, {}, []].each do |o|
+      it "should complain about using with #{o.class}" do
+        proc{ InThreads.new(o) }.should_not raise_error
+      end
+    end
+
+    it "should complain about using less than 2 threads" do
+      proc{ 10.times.in_threads(1) }.should raise_error(ArgumentError)
+    end
+
+    it "should not complain about using 2 or more threads" do
+      proc{ 10.times.in_threads(2) }.should_not raise_error
+    end
+  end
+
   describe "in_threads" do
     it "should not change existing instance" do
       threaded = enum.in_threads(10)
