@@ -3,13 +3,30 @@ require 'thwait'
 
 module Enumerable
   # Run enumerable method blocks in threads
+  #
+  #   urls.in_threads.map do |url|
+  #     url.fetch
+  #   end
+  #
+  # Specify number of threads to use:
+  #
+  #   files.in_threads(4).all? do |file|
+  #     file.valid?
+  #   end
+  #
+  # Passing block runs it against <tt>each</tt>
+  #
+  #   urls.in_threads.each{ … }
+  #
+  # is same as
+  #
+  #   urls.in_threads{ … }
   def in_threads(thread_count = 10, &block)
     InThreads.new(self, thread_count, &block)
   end
 end
 
 # TODO: all ruby1.9.3 methods
-# TODO: documentation
 
 class InThreads
   (
@@ -30,15 +47,23 @@ class InThreads
     each(&block) if block
   end
 
+  # Creates new instance using underlying enumerable and new thread_count
   def in_threads(thread_count = 10, &block)
     self.class.new(enumerable, thread_count, &block)
   end
 
   class << self
+    # List of instance_methods of Enumerable
     def enumerable_methods
       Enumerable.instance_methods.map(&:to_s)
     end
 
+    # Specify runner to use
+    #
+    #   use :run_in_threads_consecutive, :for => %w[all? any? none? one?]
+    #
+    # <tt>:for</tt> is required
+    # <tt>:ignore_undefined</tt> ignores methods which are not present in list returned by <tt>enumerable_methods</tt>
     def use(runner, options)
       methods = Array(options[:for])
       raise 'no methods provided using :for option' if methods.empty?
@@ -79,6 +104,7 @@ class InThreads
     include? member?
   ], :ignore_undefined => true
 
+  # Special case method, works by applying <tt>run_in_threads_consecutive</tt> with map on enumerable returned by blockless run
   def grep(*args, &block)
     if block
       run_in_threads_consecutive(enumerable.grep(*args), :map, &block)
@@ -87,14 +113,18 @@ class InThreads
     end
   end
 
-private
+protected
 
+  # Use ThreadsWait to limit number of threads
   class ThreadLimiter
+    # Initialize with limit
     def initialize(count)
       @count = count
       @waiter = ThreadsWait.new
     end
 
+    # Without block behaves as <tt>new</tt>
+    # With block yields it with <tt>self</tt> and ensures running of <tt>finalize</tt>
     def self.limit(count, &block)
       limiter = new(count)
       if block
@@ -108,6 +138,7 @@ private
       end
     end
 
+    # Add thread to <tt>ThreadsWait</tt>, wait for finishing of one thread if limit reached
     def add(thread)
       if @waiter.threads.length + 1 >= @count
         @waiter.join(thread)
@@ -116,11 +147,13 @@ private
       end
     end
 
+    # Wait for waiting threads
     def finalize
       @waiter.all_waits
     end
   end
 
+  # Use for methods which don't use block result
   def run_in_threads_block_result_irrelevant(enumerable, method, *args, &block)
     if block
       ThreadLimiter.limit(thread_count) do |limiter|
@@ -133,6 +166,7 @@ private
     end
   end
 
+  # Use for methods which do use block result and fire objects in same way as <tt>each</tt>
   def run_in_threads_consecutive(enumerable, method, *args, &block)
     if block
       begin
@@ -159,6 +193,7 @@ private
     end
   end
 
+  # Use for methods which don't use blocks or can not use threads
   def run_without_threads(enumerable, method, *args, &block)
     enumerable.send(method, *args, &block)
   end
