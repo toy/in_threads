@@ -92,16 +92,44 @@ class InThreads
 
 private
 
+  class ThreadLimiter
+    def initialize(count)
+      @count = count
+      @waiter = ThreadsWait.new
+    end
+
+    def self.limit(count, &block)
+      limiter = new(count)
+      if block
+        begin
+          yield limiter
+        ensure
+          limiter.finalize
+        end
+      else
+        limiter
+      end
+    end
+
+    def add(thread)
+      if @waiter.threads.length + 1 >= @count
+        @waiter.join(thread)
+      else
+        @waiter.join_nowait(thread)
+      end
+    end
+
+    def finalize
+      @waiter.all_waits
+    end
+  end
+
   def run_in_threads_block_result_irrelevant(enumerable, method, *args, &block)
     if block
-      waiter = ThreadsWait.new
-      begin
+      ThreadLimiter.limit(thread_count) do |limiter|
         enumerable.send(method, *args) do |*block_args|
-          waiter.next_wait if waiter.threads.length >= thread_count
-          waiter.join_nowait([Thread.new(*block_args, &block)])
+          limiter.add(Thread.new(*block_args, &block))
         end
-      ensure
-        waiter.all_waits
       end
     else
       enumerable.send(method, *args)
@@ -113,17 +141,13 @@ private
       begin
         queue = Queue.new
         runner = Thread.new do
-          waiter = ThreadsWait.new
-          begin
+          ThreadLimiter.limit(thread_count) do |limiter|
             enumerable.each do |object|
-              waiter.next_wait if waiter.threads.length >= thread_count
               break if Thread.current[:stop]
               thread = Thread.new(object, &block)
-              waiter.join_nowait([thread])
               queue << thread
+              limiter.add(thread)
             end
-          ensure
-            waiter.all_waits
           end
         end
         enumerable.send(method, *args) do |object|

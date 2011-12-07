@@ -16,10 +16,6 @@ class Item
     sleep @rand * 0.008
   end
 
-  def work_more
-    sleep @rand * 0.1
-  end
-
   def value
     work; @rand
   end
@@ -115,6 +111,31 @@ describe "in_threads" do
     end
   end
 
+  describe "thread count" do
+    let(:enum){ 100.times.map{ |i| ValueItem.new(i, i < 50) } }
+
+    %w[each map all?].each do |method|
+      it "should run in specified number of threads for #{method}" do
+        @thread_count = 0
+        @max_thread_count = 0
+        @mutex = Mutex.new
+        enum.in_threads(13).send(method) do |o|
+          @mutex.synchronize do
+            @thread_count += 1
+            @max_thread_count = [@max_thread_count, @thread_count].max
+          end
+          res = o.check?
+          @mutex.synchronize do
+            @thread_count -= 1
+          end
+          res
+        end
+        @thread_count.should == 0
+        @max_thread_count.should == 13
+      end
+    end
+  end
+
   describe "each" do
     it "should return same enum after running" do
       enum.in_threads.each(&:value).should == enum
@@ -135,26 +156,6 @@ describe "in_threads" do
 
     it "should return same enum without block" do
       enum.in_threads.each.to_a.should == enum.each.to_a
-    end
-
-    it "should run in specified number of threads" do
-      enum = 100.times.map{ |i| Item.new(i) }
-
-      @thread_count = 0
-      @max_thread_count = 0
-      @mutex = Mutex.new
-      enum.in_threads(13).each do |o|
-        @mutex.synchronize do
-          @thread_count += 1
-          @max_thread_count = [@max_thread_count, @thread_count].max
-        end
-        o.work_more
-        @mutex.synchronize do
-          @thread_count -= 1
-        end
-      end
-      @thread_count.should == 0
-      @max_thread_count.should == 13
     end
   end
 
