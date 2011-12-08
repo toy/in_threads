@@ -26,6 +26,12 @@ module Enumerable
   end
 end
 
+=begin
+  TODO remove enumerable_methods
+  TODO move ThreadLimiter to separate file
+  TODO create CachedEnumerator solving problem of doble call to each in run_in_threads_consecutive (for example with methods enumerator and last_enumerator) maybe separate to gem rightaway
+=end
+
 class InThreads
   (
     instance_methods.map(&:to_s) -
