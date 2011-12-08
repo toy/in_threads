@@ -26,8 +26,6 @@ module Enumerable
   end
 end
 
-# TODO: all ruby1.9.3 methods
-
 class InThreads
   (
     instance_methods.map(&:to_s) -
