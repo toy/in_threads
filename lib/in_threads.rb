@@ -105,6 +105,7 @@ class InThreads
     first
     include? member?
     each_with_object
+    chunk slice_before
   ], :ignore_undefined => true
 
   # Special case method, works by applying <tt>run_in_threads_consecutive</tt> with map on enumerable returned by blockless run

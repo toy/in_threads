@@ -478,5 +478,13 @@ describe "in_threads" do
         enum.in_threads.each_with_object({}, &runner).should == enum.each_with_object({}, &runner)
       end
     end
+
+    %w[chunk slice_before].each do |method|
+      describe_enum_method method do
+        it "should return same result" do
+          enum.in_threads.send(method, &:check?).to_a.should == enum.send(method, &:check?).to_a
+        end
+      end
+    end
   end
 end
