@@ -87,6 +87,7 @@ class InThreads
     detect find find_index drop_while take_while
     partition find_all select reject count
     collect map group_by max_by min_by minmax_by sort_by
+    flat_map collect_concat
   ], :ignore_undefined => true
   use :run_in_threads_block_result_irrelevant, :for => %w[
     reverse_each

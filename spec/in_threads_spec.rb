@@ -395,6 +395,30 @@ describe "in_threads" do
     end
   end
 
+  %w[flat_map collect_concat].each do |method|
+    describe_enum_method method do
+      let(:enum){ 20.times.map{ |i| Item.new(i) }.each_slice(3) }
+      let(:runner){ proc{ |a| a.map(&:value) } }
+
+      it "should return same result with threads" do
+        enum.in_threads.send(method, &runner).should == enum.send(method, &runner)
+      end
+
+      it "should fire same objects" do
+        enum.send(method){ |a| a.each{ |o| o.should_receive(:touch).with(a).once } }
+        enum.in_threads.send(method){ |a| a.each{ |o| o.touch_n_value(a) } }
+      end
+
+      it "should run faster with threads" do
+        measure{ enum.in_threads.send(method, &runner) }.should < measure{ enum.send(method, &runner) } * speed_coef
+      end
+
+      it "should return same enum without block" do
+        enum.in_threads.send(method).to_a.should == enum.send(method).to_a
+      end
+    end
+  end
+
   context "unthreaded" do
     %w[inject reduce].each do |method|
       describe method do
