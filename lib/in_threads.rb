@@ -27,7 +27,6 @@ module Enumerable
 end
 
 =begin
-  TODO remove enumerable_methods
   TODO move ThreadLimiter to separate file
   TODO create CachedEnumerator solving problem of doble call to each in run_in_threads_consecutive (for example with methods enumerator and last_enumerator) maybe separate to gem rightaway
 =end
@@ -57,22 +56,17 @@ class InThreads
   end
 
   class << self
-    # List of instance_methods of Enumerable
-    def enumerable_methods
-      Enumerable.instance_methods.map(&:to_s)
-    end
-
     # Specify runner to use
     #
     #   use :run_in_threads_consecutive, :for => %w[all? any? none? one?]
     #
     # <tt>:for</tt> is required
-    # <tt>:ignore_undefined</tt> ignores methods which are not present in list returned by <tt>enumerable_methods</tt>
+    # <tt>:ignore_undefined</tt> ignores methods which are not present in <tt>Enumerable.instance_methods</tt>
     def use(runner, options)
       methods = Array(options[:for])
       raise 'no methods provided using :for option' if methods.empty?
       ignore_undefined = options[:ignore_undefined]
-      enumerable_methods = self.enumerable_methods
+      enumerable_methods = Enumerable.instance_methods.map(&:to_s)
       methods.each do |method|
         unless ignore_undefined && !enumerable_methods.include?(method)
           class_eval <<-RUBY
