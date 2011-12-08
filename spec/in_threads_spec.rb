@@ -70,9 +70,9 @@ describe "in_threads" do
     Time.now - start
   end
 
-  # it "should define all Enumerable methods" do
-  #   (Enumerable.instance_methods - 10.times.in_threads.class.instance_methods).should == []
-  # end
+  (Enumerable.instance_methods - 10.times.in_threads.class.instance_methods).each do |method|
+    pending method
+  end
 
   describe "verifying params" do
     it "should complain about using with non enumerable" do
