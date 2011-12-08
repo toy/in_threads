@@ -48,8 +48,16 @@ class ValueItem < Item
   end
 end
 
-def enum_methods(methods)
-  (Enumerable.instance_methods.map(&:to_s) & methods)
+def describe_enum_method(method, &block)
+  @enum_methods ||= Enumerable.instance_methods.map(&:to_s)
+  if @enum_methods.include?(method)
+    describe(method, &block)
+  else
+    it "should not be defined" do
+      exception_regexp = /^undefined method `#{Regexp.escape(method)}' for #<InThreads:0x[0-9a-f]+>$/
+      proc{ enum.in_threads.send(method) }.should raise_error(NoMethodError, exception_regexp)
+    end
+  end
 end
 
 describe "in_threads" do
@@ -60,6 +68,30 @@ describe "in_threads" do
     start = Time.now
     yield
     Time.now - start
+  end
+
+  (Enumerable.instance_methods - 10.times.in_threads.class.instance_methods).each do |method|
+    pending method
+  end
+
+  describe "verifying params" do
+    it "should complain about using with non enumerable" do
+      proc{ InThreads.new(1) }.should raise_error(ArgumentError)
+    end
+
+    [1..10, 10.times, {}, []].each do |o|
+      it "should complain about using with #{o.class}" do
+        proc{ InThreads.new(o) }.should_not raise_error
+      end
+    end
+
+    it "should complain about using less than 2 threads" do
+      proc{ 10.times.in_threads(1) }.should raise_error(ArgumentError)
+    end
+
+    it "should not complain about using 2 or more threads" do
+      proc{ 10.times.in_threads(2) }.should_not raise_error
+    end
   end
 
   describe "in_threads" do
@@ -79,6 +111,31 @@ describe "in_threads" do
     end
   end
 
+  describe "thread count" do
+    let(:enum){ 100.times.map{ |i| ValueItem.new(i, i < 50) } }
+
+    %w[each map all?].each do |method|
+      it "should run in specified number of threads for #{method}" do
+        @thread_count = 0
+        @max_thread_count = 0
+        @mutex = Mutex.new
+        enum.in_threads(13).send(method) do |o|
+          @mutex.synchronize do
+            @thread_count += 1
+            @max_thread_count = [@max_thread_count, @thread_count].max
+          end
+          res = o.check?
+          @mutex.synchronize do
+            @thread_count -= 1
+          end
+          res
+        end
+        @thread_count.should == 0
+        @max_thread_count.should == 13
+      end
+    end
+  end
+
   describe "each" do
     it "should return same enum after running" do
       enum.in_threads.each(&:value).should == enum
@@ -86,7 +143,7 @@ describe "in_threads" do
 
     it "should execute block for each element" do
       enum.each{ |o| o.should_receive(:touch).once }
-      enum.in_threads.each(&:touch)
+      enum.in_threads.each(&:touch_n_value)
     end
 
     it "should run faster with threads" do
@@ -94,7 +151,7 @@ describe "in_threads" do
     end
 
     it "should run faster with more threads" do
-      measure{ enum.in_threads(20).each(&:work) }.should < measure{ enum.in_threads(2).each(&:work) } * speed_coef
+      measure{ enum.in_threads(10).each(&:work) }.should < measure{ enum.in_threads(2).each(&:work) } * speed_coef
     end
 
     it "should return same enum without block" do
@@ -102,8 +159,8 @@ describe "in_threads" do
     end
   end
 
-  enum_methods(%w[each_with_index enum_with_index]).each do |method|
-    describe method do
+  %w[each_with_index enum_with_index].each do |method|
+    describe_enum_method method do
       let(:runner){ proc{ |o, i| o.value } }
 
       it "should return same result with threads" do
@@ -131,14 +188,14 @@ describe "in_threads" do
     end
 
     it "should fire same objects in reverse order" do
-      @order = mock('order', :touch => nil)
-      @order.should_receive(:touch).with(enum.last).ordered
-      @order.should_receive(:touch).with(enum[enum.length / 2]).ordered
-      @order.should_receive(:touch).with(enum.first).ordered
+      @order = mock('order', :notify => nil)
+      @order.should_receive(:notify).with(enum.last).ordered
+      @order.should_receive(:notify).with(enum[enum.length / 2]).ordered
+      @order.should_receive(:notify).with(enum.first).ordered
       enum.reverse_each{ |o| o.should_receive(:touch).once }
       @mutex = Mutex.new
       enum.in_threads.reverse_each do |o|
-        @mutex.synchronize{ @order.touch(o) }
+        @mutex.synchronize{ @order.notify(o) }
         o.touch_n_value
       end
     end
@@ -220,8 +277,8 @@ describe "in_threads" do
     end
   end
 
-  enum_methods(%w[each_cons each_slice enum_slice enum_cons]).each do |method|
-    describe method do
+  %w[each_cons each_slice enum_slice enum_cons].each do |method|
+    describe_enum_method method do
       let(:runner){ proc{ |a| a.each(&:value) } }
 
       it "should fire same objects" do
@@ -300,6 +357,68 @@ describe "in_threads" do
     end
   end
 
+  describe_enum_method "each_entry" do
+    class EachEntryYielder
+      include Enumerable
+      def each
+        10.times{ yield 1 }
+        10.times{ yield 2, 3 }
+        10.times{ yield }
+      end
+    end
+
+    let(:enum){ EachEntryYielder.new }
+    let(:runner){ proc{ |o| ValueItem.new(0, o).work } }
+
+    it "should return same result with threads" do
+      enum.in_threads.each_entry(&runner).should == enum.each_entry(&runner)
+    end
+
+    it "should execute block for each element" do
+      @order = mock('order')
+      @order.should_receive(:notify).with(1).exactly(10).times.ordered
+      @order.should_receive(:notify).with([2, 3]).exactly(10).times.ordered
+      @order.should_receive(:notify).with(nil).exactly(10).times.ordered
+      @mutex = Mutex.new
+      enum.in_threads.each_entry do |o|
+        @mutex.synchronize{ @order.notify(o) }
+        runner[]
+      end
+    end
+
+    it "should run faster with threads" do
+      measure{ enum.in_threads.each_entry(&runner) }.should < measure{ enum.each_entry(&runner) } * speed_coef
+    end
+
+    it "should return same enum without block" do
+      enum.in_threads.each_entry.to_a.should == enum.each_entry.to_a
+    end
+  end
+
+  %w[flat_map collect_concat].each do |method|
+    describe_enum_method method do
+      let(:enum){ 20.times.map{ |i| Item.new(i) }.each_slice(3) }
+      let(:runner){ proc{ |a| a.map(&:value) } }
+
+      it "should return same result with threads" do
+        enum.in_threads.send(method, &runner).should == enum.send(method, &runner)
+      end
+
+      it "should fire same objects" do
+        enum.send(method){ |a| a.each{ |o| o.should_receive(:touch).with(a).once } }
+        enum.in_threads.send(method){ |a| a.each{ |o| o.touch_n_value(a) } }
+      end
+
+      it "should run faster with threads" do
+        measure{ enum.in_threads.send(method, &runner) }.should < measure{ enum.send(method, &runner) } * speed_coef
+      end
+
+      it "should return same enum without block" do
+        enum.in_threads.send(method).to_a.should == enum.send(method).to_a
+      end
+    end
+  end
+
   context "unthreaded" do
     %w[inject reduce].each do |method|
       describe method do
@@ -348,6 +467,22 @@ describe "in_threads" do
       describe method do
         it "should return same result" do
           enum.in_threads.send(method, enum[10]).should == enum.send(method, enum[10])
+        end
+      end
+    end
+
+    describe_enum_method "each_with_object" do
+      let(:runner){ proc{ |o, h| h[o.value] = true } }
+
+      it "should return same result" do
+        enum.in_threads.each_with_object({}, &runner).should == enum.each_with_object({}, &runner)
+      end
+    end
+
+    %w[chunk slice_before].each do |method|
+      describe_enum_method method do
+        it "should return same result" do
+          enum.in_threads.send(method, &:check?).to_a.should == enum.send(method, &:check?).to_a
         end
       end
     end
