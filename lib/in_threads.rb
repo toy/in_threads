@@ -136,19 +136,19 @@ protected
   def run_in_threads_consecutive(enumerable, method, *args, &block)
     if block
       begin
-        queue = Queue.new
+        results = Queue.new
         runner = Thread.new do
           ThreadLimiter.limit(thread_count) do |limiter|
             enumerable.each do |object|
               break if Thread.current[:stop]
               thread = Thread.new(object, &block)
-              queue << thread
+              results << thread
               limiter.add(thread)
             end
           end
         end
         enumerable.send(method, *args) do |object|
-          queue.pop.value
+          results.pop.value
         end
       ensure
         runner[:stop] = true
