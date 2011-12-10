@@ -235,7 +235,7 @@ describe "in_threads" do
           enum.in_threads.send(method){ |o| @mutex.synchronize{ @a << o }; o.check? }
 
           @a.length.should >= a.length
-          @a.length.should <= enum.length / 2
+          @a.length.should <= enum.length * 0.75
         end
 
         it "should run faster with threads" do

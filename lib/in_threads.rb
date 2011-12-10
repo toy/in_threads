@@ -28,6 +28,7 @@ end
 =begin
   TODO create CachedEnumerator solving problem of doble call to each in run_in_threads_consecutive (for example with methods enumerator and last_enumerator) maybe separate to gem rightaway
   TODO try using method_missing
+  TODO why drop_while goes through 50 items?
 =end
 
 class InThreads
