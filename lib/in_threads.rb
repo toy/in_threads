@@ -1,5 +1,4 @@
 require 'thread'
-require 'thwait'
 
 module Enumerable
   # Run enumerable method blocks in threads

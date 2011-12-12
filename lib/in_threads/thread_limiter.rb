@@ -1,3 +1,5 @@
+require 'thwait'
+
 class InThreads
   # Use ThreadsWait to limit number of threads
   class ThreadLimiter
