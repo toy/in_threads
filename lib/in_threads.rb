@@ -78,21 +78,21 @@ class InThreads
     end
   end
 
-  use :run_in_threads_block_result_irrelevant, :for => %w[each]
-  use :run_in_threads_consecutive, :for => %w[
-    all? any? none? one?
-    detect find find_index drop_while take_while
-    partition find_all select reject count
-    collect map group_by max_by min_by minmax_by sort_by
-    flat_map collect_concat
-  ], :ignore_undefined => true
-  use :run_in_threads_block_result_irrelevant, :for => %w[
+  use :run_in_threads_return_original_enum, :for => %w[each]
+  use :run_in_threads_return_original_enum, :for => %w[
     reverse_each
     each_with_index enum_with_index
     each_cons each_slice enum_cons enum_slice
     zip
     cycle
     each_entry
+  ], :ignore_undefined => true
+  use :run_in_threads_consecutive, :for => %w[
+    all? any? none? one?
+    detect find find_index drop_while take_while
+    partition find_all select reject count
+    collect map group_by max_by min_by minmax_by sort_by
+    flat_map collect_concat
   ], :ignore_undefined => true
   use :run_without_threads, :for => %w[
     inject reduce
@@ -119,7 +119,7 @@ protected
   autoload :ThreadLimiter, 'in_threads/thread_limiter'
 
   # Use for methods which don't use block result
-  def run_in_threads_block_result_irrelevant(enumerable, method, *args, &block)
+  def run_in_threads_return_original_enum(enumerable, method, *args, &block)
     if block
       ThreadLimiter.limit(thread_count) do |limiter|
         enumerable.send(method, *args) do |*block_args|
