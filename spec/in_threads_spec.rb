@@ -132,6 +132,27 @@ describe "in_threads" do
         end
       end
     end
+
+    describe "underlying enumerable usage" do
+      class CheckEachCalls
+        include Enumerable
+
+        def each
+          each_started
+          100.times.each do |i|
+            yield ValueItem.new(i, i < 50)
+          end
+        end
+      end
+      let(:enum){ CheckEachCalls.new }
+
+      %w[each map all?].each do |method|
+        it "should call underlying enumerable.each only once for #{method}" do
+          enum.should_receive(:each_started).once
+          enum.in_threads(13).send(method, &:check?)
+        end
+      end
+    end
   end
 
   describe "methods" do
