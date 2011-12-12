@@ -25,7 +25,7 @@ class InThreads
     end
 
     # Add thread to <tt>ThreadsWait</tt>, wait for finishing of one thread if limit reached
-    def add(thread)
+    def <<(thread)
       if @waiter.threads.length + 1 >= @count
         @waiter.join(thread)
       else

@@ -123,7 +123,7 @@ protected
     if block
       ThreadLimiter.limit(thread_count) do |limiter|
         enumerable.send(method, *args) do |*block_args|
-          limiter.add(Thread.new(*block_args, &block))
+          limiter << Thread.new(*block_args, &block)
         end
       end
     else
@@ -142,7 +142,7 @@ protected
               break if Thread.current[:stop]
               thread = Thread.new(object, &block)
               results << thread
-              limiter.add(thread)
+              limiter << thread
             end
           end
         end
