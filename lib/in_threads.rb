@@ -26,7 +26,6 @@ module Enumerable
 end
 
 =begin
-  TODO create CachedEnumerator solving problem of doble call to each in run_in_threads_consecutive (for example with methods enumerator and last_enumerator) maybe separate to gem rightaway
   TODO try using method_missing
   TODO why drop_while goes through 50 items?
 =end
@@ -118,6 +117,7 @@ class InThreads
 protected
 
   autoload :ThreadLimiter, 'in_threads/thread_limiter'
+  autoload :Filler, 'in_threads/filler'
 
   # Use for methods which don't use block result
   def run_in_threads_return_original_enum(enumerable, method, *args, &block)
@@ -136,10 +136,11 @@ protected
   def run_in_threads_consecutive(enumerable, method, *args, &block)
     if block
       begin
+        enum_a, enum_b = Filler.new(enumerable, 2).extractors
         results = Queue.new
         runner = Thread.new do
           ThreadLimiter.limit(thread_count) do |limiter|
-            enumerable.each do |object|
+            enum_a.each do |object|
               break if Thread.current[:stop]
               thread = Thread.new(object, &block)
               results << thread
@@ -147,7 +148,7 @@ protected
             end
           end
         end
-        enumerable.send(method, *args) do |object|
+        enum_b.send(method, *args) do |object|
           results.pop.value
         end
       ensure
