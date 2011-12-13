@@ -25,10 +25,6 @@ module Enumerable
   end
 end
 
-=begin
-  TODO try using method_missing
-=end
-
 class InThreads
   (
     instance_methods.map(&:to_s) -
