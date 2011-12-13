@@ -27,7 +27,6 @@ end
 
 =begin
   TODO try using method_missing
-  TODO why drop_while goes through 50 items?
 =end
 
 class InThreads
@@ -139,6 +138,7 @@ protected
         enum_a, enum_b = Filler.new(enumerable, 2).extractors
         results = Queue.new
         runner = Thread.new do
+          Thread.current.priority = -1
           ThreadLimiter.limit(thread_count) do |limiter|
             enum_a.each do |object|
               break if Thread.current[:stop]

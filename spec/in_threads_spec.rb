@@ -1,23 +1,22 @@
 require File.dirname(__FILE__) + '/spec_helper.rb'
 
 class Item
+  attr_reader :rand
   def initialize(i)
-    @i, @rand = i, rand
+    @i = i
+    @rand = Kernel.rand
+    @sleep = Kernel.rand
   end
 
   class MiddleMatcher
     def ===(item)
       raise "#{item.inspect} is not an Item" unless item.is_a?(Item)
-      (0.25..0.75) === item.instance_variable_get(:@rand)
+      (0.25..0.75) === item.rand
     end
   end
 
-  def work
-    sleep @rand * 0.008
-  end
-
   def value
-    work; @rand
+    sleep; rand
   end
 
   def check?
@@ -31,6 +30,12 @@ class Item
   def touch_n_check?(*args)
     touch(*args); check?
   end
+
+private
+
+  def sleep
+    Kernel.sleep @sleep * 0.01
+  end
 end
 
 class ValueItem < Item
@@ -40,7 +45,7 @@ class ValueItem < Item
   end
 
   def value
-    work; @value
+    sleep; @value
   end
 
   def check?
@@ -171,11 +176,11 @@ describe "in_threads" do
       end
 
       it "should run faster with threads" do
-        measure{ enum.in_threads.each(&:work) }.should < measure{ enum.each(&:work) } * speed_coef
+        measure{ enum.in_threads.each(&:value) }.should < measure{ enum.each(&:value) } * speed_coef
       end
 
       it "should run faster with more threads" do
-        measure{ enum.in_threads(10).each(&:work) }.should < measure{ enum.in_threads(2).each(&:work) } * speed_coef
+        measure{ enum.in_threads(10).each(&:value) }.should < measure{ enum.in_threads(2).each(&:value) } * speed_coef
       end
 
       it "should return same enum without block" do
@@ -256,12 +261,12 @@ describe "in_threads" do
           enum.in_threads.send(method){ |o| @mutex.synchronize{ @a << o }; o.check? }
 
           @a.length.should >= a.length
-          @a.length.should <= enum.length * 0.75
+          @a.length.should <= enum.length * 0.5
         end
 
         it "should run faster with threads" do
-          value = %w[all? drop_while take_while].include?(method)
-          enum = 30.times.map{ |i| ValueItem.new(i, value) }
+          boolean = %w[all? drop_while take_while].include?(method)
+          enum = 30.times.map{ |i| ValueItem.new(i, boolean) }
           measure{ enum.in_threads.send(method, &:check?) }.should < measure{ enum.send(method, &:check?) } * speed_coef
         end
       end
@@ -352,7 +357,7 @@ describe "in_threads" do
       end
 
       it "should run faster with threads" do
-        measure{ enum.in_threads.cycle(3, &:work) }.should < measure{ enum.cycle(3, &:work) } * speed_coef
+        measure{ enum.in_threads.cycle(3, &:value) }.should < measure{ enum.cycle(3, &:value) } * speed_coef
       end
 
       it "should return same enum without block" do
@@ -392,7 +397,7 @@ describe "in_threads" do
       end
 
       let(:enum){ EachEntryYielder.new }
-      let(:runner){ proc{ |o| ValueItem.new(0, o).work } }
+      let(:runner){ proc{ |o| ValueItem.new(0, o).value } }
 
       it "should return same result with threads" do
         enum.in_threads.each_entry(&runner).should == enum.each_entry(&runner)
