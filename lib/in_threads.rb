@@ -92,7 +92,7 @@ class InThreads
   use :run_without_threads, :for => %w[
     inject reduce
     max min minmax sort
-    entries to_a
+    entries to_a to_set
     drop take
     first
     include? member?
