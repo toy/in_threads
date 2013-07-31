@@ -58,7 +58,7 @@ def describe_enum_method(method, &block)
     describe(method, &block)
   else
     it "should not be defined" do
-      exception_regexp = /^undefined method `#{Regexp.escape(method)}' for #<InThreads:0x[0-9a-f]+>$/
+      exception_regexp = /^undefined method `#{Regexp.escape(method)}' .*\bInThreads\b/
       proc{ enum.in_threads.send(method) }.should raise_error(NoMethodError, exception_regexp)
     end
   end
