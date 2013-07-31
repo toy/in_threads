@@ -5,7 +5,6 @@ class Item
   def initialize(i)
     @i = i
     @rand = Kernel.rand
-    @sleep = Kernel.rand
   end
 
   class MiddleMatcher
@@ -34,7 +33,7 @@ class Item
 private
 
   def sleep
-    Kernel.sleep @sleep * 0.01
+    Kernel.sleep 0.01
   end
 end
 
