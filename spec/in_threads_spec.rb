@@ -391,7 +391,7 @@ describe "in_threads" do
         def each
           10.times{ yield 1 }
           10.times{ yield 2, 3 }
-          10.times{ yield }
+          10.times{ yield 4, 5, 6 }
         end
       end
 
@@ -406,7 +406,7 @@ describe "in_threads" do
         @order = double('order')
         @order.should_receive(:notify).with(1).exactly(10).times.ordered
         @order.should_receive(:notify).with([2, 3]).exactly(10).times.ordered
-        @order.should_receive(:notify).with(nil).exactly(10).times.ordered
+        @order.should_receive(:notify).with([4, 5, 6]).exactly(10).times.ordered
         @mutex = Mutex.new
         enum.in_threads.each_entry do |o|
           @mutex.synchronize{ @order.notify(o) }
