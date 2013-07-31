@@ -30,7 +30,7 @@ class InThreads
     instance_methods.map(&:to_s) -
     %w[__id__ __send__ class inspect instance_of? is_a? kind_of? nil? object_id respond_to? send]
   ).each{ |name| undef_method name }
-  (private_instance_methods.map(&:to_s) - %w[initialize raise]).each{ |name| undef_method name }
+  (private_instance_methods.map(&:to_s) - %w[initialize raise method_missing]).each{ |name| undef_method name }
 
   attr_reader :enumerable, :thread_count
   def initialize(enumerable, thread_count = 10, &block)
