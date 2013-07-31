@@ -217,7 +217,7 @@ describe "in_threads" do
       end
 
       it "should fire same objects in reverse order" do
-        @order = mock('order', :notify => nil)
+        @order = double('order', :notify => nil)
         @order.should_receive(:notify).with(enum.last).ordered
         @order.should_receive(:notify).with(enum[enum.length / 2]).ordered
         @order.should_receive(:notify).with(enum.first).ordered
@@ -404,7 +404,7 @@ describe "in_threads" do
       end
 
       it "should execute block for each element" do
-        @order = mock('order')
+        @order = double('order')
         @order.should_receive(:notify).with(1).exactly(10).times.ordered
         @order.should_receive(:notify).with([2, 3]).exactly(10).times.ordered
         @order.should_receive(:notify).with(nil).exactly(10).times.ordered
