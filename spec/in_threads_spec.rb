@@ -1,21 +1,19 @@
 require File.dirname(__FILE__) + '/spec_helper.rb'
 
 class Item
-  attr_reader :rand
   def initialize(i)
-    @i = i
-    @rand = Kernel.rand
+    @i, @value = i, Kernel.rand
   end
 
-  class MiddleMatcher
+  class HalfMatcher
     def ===(item)
       raise "#{item.inspect} is not an Item" unless item.is_a?(Item)
-      (0.25..0.75) === item.rand
+      (0.25..0.75) === item.instance_variable_get(:@value)
     end
   end
 
   def value
-    sleep; rand
+    sleep; @value
   end
 
   def check?
@@ -39,8 +37,7 @@ end
 
 class ValueItem < Item
   def initialize(i, value)
-    super(i)
-    @value = value
+    @i, @value = i, value
   end
 
   def value
@@ -365,7 +362,7 @@ describe "in_threads" do
     end
 
     describe "grep" do
-      let(:matcher){ Item::MiddleMatcher.new }
+      let(:matcher){ Item::HalfMatcher.new }
 
       it "should fire same objects" do
         enum.each{ |o| o.should_receive(:touch).exactly(matcher === o ? 1 : 0).times }
