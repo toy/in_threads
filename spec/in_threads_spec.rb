@@ -5,6 +5,10 @@ class Item
     @i, @value = i, Kernel.rand
   end
 
+  def ==(other)
+    self.id == other.id
+  end
+
   class HalfMatcher
     def ===(item)
       raise "#{item.inspect} is not an Item" unless item.is_a?(Item)
@@ -26,6 +30,12 @@ class Item
 
   def touch_n_check?(*args)
     touch(*args); check?
+  end
+
+protected
+
+  def id
+    [self.class, @i, @value]
   end
 
 private
