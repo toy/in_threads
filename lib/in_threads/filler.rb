@@ -34,7 +34,6 @@ class InThreads
       @mutex = Mutex.new
       @filler = Thread.new do
         enum.each do |o|
-          Thread.stop
           synchronize do
             @extractors.each do |extractor|
               extractor.push(o)
