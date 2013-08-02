@@ -127,7 +127,7 @@ describe "in_threads" do
           @thread_count = 0
           @max_thread_count = 0
           @mutex = Mutex.new
-          enum.in_threads(13).send(method) do |o|
+          enum.in_threads(4).send(method) do |o|
             @mutex.synchronize do
               @thread_count += 1
               @max_thread_count = [@max_thread_count, @thread_count].max
@@ -139,7 +139,7 @@ describe "in_threads" do
             res
           end
           @thread_count.should == 0
-          @max_thread_count.should == 13
+          @max_thread_count.should == 4
         end
       end
     end
