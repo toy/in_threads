@@ -2,6 +2,8 @@
 
 Easily execute ruby code in parallel.
 
+[![Build Status](https://travis-ci.org/toy/in_threads.png?branch=master)](https://travis-ci.org/toy/in_threads)
+
 ## Installation
 
     gem install in_threads
