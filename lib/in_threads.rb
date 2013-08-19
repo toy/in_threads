@@ -6,7 +6,7 @@ class InThreads < Delegator
   def initialize(enumerable, thread_count = 10, &block)
     super(enumerable)
     @enumerable, @thread_count = enumerable, thread_count.to_i
-    unless enumerable.class.include?(Enumerable)
+    unless enumerable.is_a?(Enumerable)
       raise ArgumentError.new('`enumerable` should include Enumerable.')
     end
     if thread_count < 2
