@@ -1,14 +1,10 @@
 require 'thread'
+require 'delegate'
 
-class InThreads
-  (
-    instance_methods.map(&:to_s) -
-    %w[__id__ __send__ class inspect instance_of? is_a? kind_of? nil? object_id respond_to? send]
-  ).each{ |name| undef_method name }
-  (private_instance_methods.map(&:to_s) - %w[initialize raise method_missing]).each{ |name| undef_method name }
-
+class InThreads < Delegator
   attr_reader :enumerable, :thread_count
   def initialize(enumerable, thread_count = 10, &block)
+    super(enumerable)
     @enumerable, @thread_count = enumerable, thread_count.to_i
     unless enumerable.class.include?(Enumerable)
       raise ArgumentError.new('`enumerable` should include Enumerable.')
@@ -85,6 +81,14 @@ class InThreads
   end
 
 protected
+
+  def __getobj__
+    @enumerable
+  end
+
+  def __setobj__(obj)
+    @enumerable = obj
+  end
 
   autoload :ThreadLimiter, 'in_threads/thread_limiter'
   autoload :Filler, 'in_threads/filler'
