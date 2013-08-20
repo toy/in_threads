@@ -80,6 +80,11 @@ class InThreads < Delegator
     end
   end
 
+  # befriend with progress gem
+  def with_progress(title = nil, length = nil, &block)
+    ::Progress::WithProgress.new(self, title, length, &block)
+  end
+
 protected
 
   def __getobj__
