@@ -34,4 +34,4 @@ You can use any Enumerable method, but some of them can not use threads (`inject
 
 ## Copyright
 
-Copyright (c) 2010-2013 Ivan Kuchin. See LICENSE.txt for details.
+Copyright (c) 2010-2014 Ivan Kuchin. See LICENSE.txt for details.
