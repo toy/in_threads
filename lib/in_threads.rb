@@ -95,9 +95,6 @@ protected
     @enumerable = obj
   end
 
-  autoload :ThreadLimiter, 'in_threads/thread_limiter'
-  autoload :Filler, 'in_threads/filler'
-
   # Use for methods which don't use block result
   def run_in_threads_return_original_enum(enumerable, method, *args, &block)
     if block
@@ -147,3 +144,5 @@ protected
 end
 
 require 'in_threads/enumerable'
+require 'in_threads/filler'
+require 'in_threads/thread_limiter'
