@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = 'in_threads'
-  s.version     = '1.2.1'
+  s.version     = '1.2.2'
   s.summary     = %q{Execute ruby code in parallel}
   s.homepage    = "http://github.com/toy/#{s.name}"
   s.authors     = ['Ivan Kuchin']
