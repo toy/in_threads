@@ -173,6 +173,13 @@ describe "in_threads" do
       pending method
     end
 
+    class TestException < StandardError; end
+
+    def check_test_exception(enum, &block)
+      expect{ block[enum.in_threads] }.to raise_exception(TestException)
+      expect{ block[enum.in_threads(1000)] }.to raise_exception(TestException)
+    end
+
     describe "each" do
       it "should return same enum after running" do
         expect(enum.in_threads.each(&:value)).to eq(enum)
@@ -193,6 +200,12 @@ describe "in_threads" do
 
       it "should return same enum without block" do
         expect(enum.in_threads.each.to_a).to eq(enum.each.to_a)
+      end
+
+      it "should raise exception in outer thread" do
+        check_test_exception(enum) do |threaded|
+          threaded.each{ raise TestException }
+        end
       end
     end
 
@@ -215,6 +228,12 @@ describe "in_threads" do
 
         it "should return same enum without block" do
           expect(enum.in_threads.send(method).to_a).to eq(enum.send(method).to_a)
+        end
+
+        it "should raise exception in outer thread" do
+          check_test_exception(enum) do |threaded|
+            threaded.send(method){ raise TestException }
+          end
         end
       end
     end
@@ -243,6 +262,12 @@ describe "in_threads" do
 
       it "should return same enum without block" do
         expect(enum.in_threads.reverse_each.to_a).to eq(enum.reverse_each.to_a)
+      end
+
+      it "should raise exception in outer thread" do
+        check_test_exception(enum) do |threaded|
+          threaded.reverse_each{ raise TestException }
+        end
       end
     end
 
@@ -277,6 +302,12 @@ describe "in_threads" do
           enum = 30.times.map{ |i| ValueItem.new(i, boolean) }
           expect(measure{ enum.in_threads.send(method, &:check?) }).to be < measure{ enum.send(method, &:check?) } * speed_coef
         end
+
+        it "should raise exception in outer thread" do
+          check_test_exception(enum) do |threaded|
+            threaded.send(method){ raise TestException }
+          end
+        end
       end
     end
 
@@ -294,6 +325,12 @@ describe "in_threads" do
         it "should run faster with threads" do
           expect(measure{ enum.in_threads.send(method, &:check?) }).to be < measure{ enum.send(method, &:check?) } * speed_coef
         end
+
+        it "should raise exception in outer thread" do
+          check_test_exception(enum) do |threaded|
+            threaded.send(method){ raise TestException }
+          end
+        end
       end
     end
 
@@ -310,6 +347,12 @@ describe "in_threads" do
 
         it "should run faster with threads" do
           expect(measure{ enum.in_threads.send(method, &:value) }).to be < measure{ enum.send(method, &:value) } * speed_coef
+        end
+
+        it "should raise exception in outer thread" do
+          check_test_exception(enum) do |threaded|
+            threaded.send(method){ raise TestException }
+          end
         end
       end
     end
@@ -334,6 +377,12 @@ describe "in_threads" do
         it "should return same without block" do
           expect(enum.in_threads.send(method, 3).to_a).to eq(enum.send(method, 3).to_a)
         end
+
+        it "should raise exception in outer thread" do
+          check_test_exception(enum) do |threaded|
+            threaded.send(method, 3){ raise TestException }
+          end
+        end
       end
     end
 
@@ -356,6 +405,12 @@ describe "in_threads" do
       it "should return same without block" do
         expect(enum.in_threads.zip(enum, enum)).to eq(enum.zip(enum, enum))
       end
+
+      it "should raise exception in outer thread" do
+        check_test_exception(enum) do |threaded|
+          threaded.zip(enum, enum){ raise TestException }
+        end
+      end
     end
 
     describe "cycle" do
@@ -370,6 +425,12 @@ describe "in_threads" do
 
       it "should return same enum without block" do
         expect(enum.in_threads.cycle(3).to_a).to eq(enum.cycle(3).to_a)
+      end
+
+      it "should raise exception in outer thread" do
+        check_test_exception(enum) do |threaded|
+          threaded.cycle{ raise TestException }
+        end
       end
     end
 
@@ -391,6 +452,12 @@ describe "in_threads" do
 
       it "should return same without block" do
         expect(enum.in_threads.grep(matcher)).to eq(enum.grep(matcher))
+      end
+
+      it "should raise exception in outer thread" do
+        check_test_exception(enum) do |threaded|
+          threaded.grep(matcher){ raise TestException }
+        end
       end
     end
 
@@ -430,6 +497,12 @@ describe "in_threads" do
       it "should return same enum without block" do
         expect(enum.in_threads.each_entry.to_a).to eq(enum.each_entry.to_a)
       end
+
+      it "should raise exception in outer thread" do
+        check_test_exception(enum) do |threaded|
+          threaded.each_entry{ raise TestException }
+        end
+      end
     end
 
     %w[flat_map collect_concat].each do |method|
@@ -453,6 +526,12 @@ describe "in_threads" do
         it "should return same enum without block" do
           expect(enum.in_threads.send(method).to_a).to eq(enum.send(method).to_a)
         end
+
+        it "should raise exception in outer thread" do
+          check_test_exception(enum) do |threaded|
+            threaded.send(method){ raise TestException }
+          end
+        end
       end
     end
 
@@ -463,6 +542,12 @@ describe "in_threads" do
             combiner = proc{ |memo, o| memo + o.value }
             expect(enum.in_threads.send(method, 0, &combiner)).to eq(enum.send(method, 0, &combiner))
           end
+
+          it "should raise exception in outer thread" do
+            check_test_exception(enum) do |threaded|
+              threaded.send(method){ raise TestException }
+            end
+          end
         end
       end
 
@@ -471,6 +556,12 @@ describe "in_threads" do
           it "should return same result" do
             comparer = proc{ |a, b| a.value <=> b.value }
             expect(enum.in_threads.send(method, &comparer)).to eq(enum.send(method, &comparer))
+          end
+
+          it "should raise exception in outer thread" do
+            check_test_exception(enum) do |threaded|
+              threaded.send(method){ raise TestException }
+            end
           end
         end
       end
@@ -514,12 +605,24 @@ describe "in_threads" do
         it "should return same result" do
           expect(enum.in_threads.each_with_object({}, &runner)).to eq(enum.each_with_object({}, &runner))
         end
+
+        it "should raise exception in outer thread" do
+          check_test_exception(enum) do |threaded|
+            threaded.each_with_object({}){ raise TestException }
+          end
+        end
       end
 
       %w[chunk slice_before].each do |method|
         describe_enum_method method do
           it "should return same result" do
             expect(enum.in_threads.send(method, &:check?).to_a).to eq(enum.send(method, &:check?).to_a)
+          end
+
+          it "should raise exception in outer thread" do
+            check_test_exception(enum) do |threaded|
+              threaded.send(method){ raise TestException }.to_a
+            end
           end
         end
       end
