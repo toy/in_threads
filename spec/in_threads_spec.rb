@@ -104,7 +104,7 @@ describe "in_threads" do
       end
     end
 
-    describe "in_threads" do
+    describe "in_threads method" do
       it "should not change existing instance" do
         threaded = enum.in_threads(10)
         proc{ threaded.in_threads(20) }.should_not change(threaded, :thread_count)
