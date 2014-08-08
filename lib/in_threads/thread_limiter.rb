@@ -27,7 +27,7 @@ class InThreads
     # Add thread to <tt>ThreadsWait</tt>, wait for finishing of one thread if limit reached
     def <<(thread)
       if @waiter.threads.length + 1 >= @count
-        @waiter.join(thread)
+        @waiter.join(thread).join
       else
         @waiter.join_nowait(thread)
       end
@@ -35,7 +35,7 @@ class InThreads
 
     # Wait for waiting threads
     def finalize
-      @waiter.all_waits
+      @waiter.all_waits(&:join)
     end
   end
 end
