@@ -157,19 +157,26 @@ describe 'in_threads' do
     end
 
     describe 'underlying enumerable usage' do
-      let(:enum) do
-        CustomEnum.new do |&block|
-          100.times.each do |i|
-            block[ValueItem.new(i, i < 50)]
-          end
-        end
-      end
-
       %w[each map all?].each do |method|
         it "should call underlying enumerable.each only once for #{method}" do
+          enum = CustomEnum.new do |&block|
+            100.times.each do |i|
+              block[ValueItem.new(i, i < 50)]
+            end
+          end
+
           expect(enum).to receive(:each).once.and_call_original
           enum.in_threads(13).send(method, &:check?)
         end
+      end
+
+      it 'should not yield all elements when not needed' do
+        enum = CustomEnum.new do |&block|
+          100.times{ block[1] }
+          fail
+        end
+
+        enum.in_threads(13).all?{ false }
       end
     end
   end
