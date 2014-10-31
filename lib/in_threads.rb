@@ -66,54 +66,54 @@ class InThreads < Delegator
     end
   end
 
-  class Filler
-    class Extractor
-      include Enumerable
+  # Yield objects of one enum in multiple places
+  class Splitter
+    # Enumerable using Queue
+    class Transfer
+      # Holds one object, for distinguishing eof
+      class Item
+        attr_reader :value
 
-      def initialize(filler)
-        @filler = filler
-        @queue = []
+        def initialize(value)
+          @value = value
+        end
       end
 
-      def push(o)
-        @queue.push(o)
+      include Enumerable
+
+      def initialize
+        @queue = Queue.new
+      end
+
+      def <<(object)
+        @queue << Item.new(object)
+      end
+
+      def finish
+        @queue << nil
       end
 
       def each
-        begin
-          loop do
-            while @filler.synchronize{ @queue.empty? }
-              @filler.run
-            end
-            yield @filler.synchronize{ @queue.shift }
-          end
-        rescue ThreadError => e
+        while (o = @queue.pop)
+          yield o.value
         end
         nil # non reusable
       end
     end
 
-    attr_reader :extractors
-    def initialize(enum, extractor_count)
-      @extractors = Array.new(extractor_count){ Extractor.new(self) }
-      @mutex = Mutex.new
+    # Enums receiving items
+    attr_reader :enums
+
+    def initialize(enum, enum_count)
+      @enums = Array.new(enum_count){ Transfer.new }
       @filler = Thread.new do
         enum.each do |o|
-          synchronize do
-            @extractors.each do |extractor|
-              extractor.push(o)
-            end
+          @enums.each do |enum|
+            enum << o
           end
         end
+        @enums.each(&:finish)
       end
-    end
-
-    def run
-      @filler.run
-    end
-
-    def synchronize(&block)
-      @mutex.synchronize(&block)
     end
   end
 
@@ -226,7 +226,7 @@ protected
   # Use for methods which do use block result and fire objects in same way as <tt>each</tt>
   def run_in_threads_consecutive(method, *args, &block)
     if block
-      enum_a, enum_b = Filler.new(enumerable, 2).extractors
+      enum_a, enum_b = Splitter.new(enumerable, 2).enums
       results = Queue.new
       runner = Thread.new do
         Thread.current.priority = -1
