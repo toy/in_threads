@@ -15,7 +15,7 @@ Enumerable.class_eval do
   #     file.valid?
   #   end
   #
-  # Passing block runs it against <tt>each</tt>
+  # Passing block runs it against `each`
   #
   #   urls.in_threads.each{ ... }
   #
@@ -39,8 +39,8 @@ class InThreads < SimpleDelegator
       @waiter = ThreadsWait.new
     end
 
-    # Without block behaves as <tt>new</tt>
-    # With block yields it with <tt>self</tt> and ensures running of <tt>finalize</tt>
+    # Without block behaves as `new`
+    # With block yields it with `self` and ensures running of `finalize`
     def self.limit(count, &block)
       limiter = new(count)
       if block
@@ -54,7 +54,8 @@ class InThreads < SimpleDelegator
       end
     end
 
-    # Add thread to <tt>ThreadsWait</tt>, wait for finishing of one thread if limit reached
+    # Add thread to `ThreadsWait`, wait for finishing of one thread if limit
+    # reached
     def <<(thread)
       if @waiter.threads.length + 1 >= @count
         @waiter.join(thread).join
@@ -143,8 +144,9 @@ class InThreads < SimpleDelegator
     #
     #   use :run_in_threads_consecutive, :for => %w[all? any? none? one?]
     #
-    # <tt>:for</tt> is required
-    # <tt>:ignore_undefined</tt> ignores methods which are not present in <tt>Enumerable.instance_methods</tt>
+    # `:for` is required
+    # `:ignore_undefined` ignores methods which are not present in
+    # `Enumerable.instance_methods`
     def use(runner, options)
       methods = Array(options[:for])
       fail 'no methods provided using :for option' if methods.empty?
@@ -188,7 +190,8 @@ class InThreads < SimpleDelegator
     chunk slice_before
   ], :ignore_undefined => true
 
-  # Special case method, works by applying <tt>run_in_threads_consecutive</tt> with map on enumerable returned by blockless run
+  # Special case method, works by applying `run_in_threads_consecutive` with
+  # map on enumerable returned by blockless run
   def grep(*args, &block)
     if block
       self.class.new(enumerable.grep(*args), thread_count).map(&block)
@@ -217,7 +220,7 @@ protected
     end
   end
 
-  # Use for methods which do use block result and fire objects in same way as <tt>each</tt>
+  # Use for methods which do use block result
   def run_in_threads_consecutive(method, *args, &block)
     if block
       enum_a, enum_b = Splitter.new(enumerable, 2).enums
