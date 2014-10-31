@@ -27,6 +27,7 @@ module Enumerable
   end
 end
 
+# Run Enumerable methods with blocks in threads
 class InThreads < Delegator
   # Use ThreadsWait to limit number of threads
   class ThreadLimiter
