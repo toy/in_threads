@@ -10,7 +10,9 @@ rvm:
   - jruby-19mode
   - jruby-head
   - ree
-script: bundle exec rspec
+script:
+  - bundle exec rspec
+  - '! bundle show rubocop || bundle exec rubocop' # run rubocop only if bundled
 matrix:
   fast_finish: true
   allow_failures:
