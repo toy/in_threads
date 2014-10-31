@@ -28,7 +28,9 @@ module Enumerable
 end
 
 # Run Enumerable methods with blocks in threads
-class InThreads < Delegator
+class InThreads < SimpleDelegator
+  protected :__getobj__, :__setobj__
+
   # Use ThreadsWait to limit number of threads
   class ThreadLimiter
     # Initialize with limit
@@ -202,14 +204,6 @@ class InThreads < Delegator
   end
 
 protected
-
-  def __getobj__
-    @enumerable
-  end
-
-  def __setobj__(obj)
-    @enumerable = obj
-  end
 
   # Use for methods which don't use block result
   def run_in_threads_return_original_enum(method, *args, &block)
