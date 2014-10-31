@@ -69,6 +69,8 @@ module CustomEnum
   end
 end
 
+class TestException < StandardError; end
+
 def describe_enum_method(method, &block)
   @enum_methods ||= Enumerable.instance_methods.map(&:to_s)
   if @enum_methods.include?(method)
@@ -176,8 +178,6 @@ describe 'in_threads' do
     (Enumerable.instance_methods - 10.times.in_threads.class.instance_methods).each do |method|
       pending method
     end
-
-    class TestException < StandardError; end
 
     def check_test_exception(enum, &block)
       expect{ block[enum.in_threads] }.to raise_exception(TestException)
