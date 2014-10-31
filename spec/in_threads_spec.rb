@@ -150,7 +150,6 @@ describe 'in_threads' do
         include Enumerable
 
         def each
-          each_started
           100.times.each do |i|
             yield ValueItem.new(i, i < 50)
           end
@@ -160,7 +159,7 @@ describe 'in_threads' do
 
       %w[each map all?].each do |method|
         it "should call underlying enumerable.each only once for #{method}" do
-          expect(enum).to receive(:each_started).once
+          expect(enum).to receive(:each).once.and_call_original
           enum.in_threads(13).send(method, &:check?)
         end
       end
