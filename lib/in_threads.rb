@@ -123,10 +123,10 @@ class InThreads < Delegator
     super(enumerable)
     @enumerable, @thread_count = enumerable, thread_count.to_i
     unless enumerable.is_a?(Enumerable)
-      raise ArgumentError.new('`enumerable` should include Enumerable.')
+      fail ArgumentError.new('`enumerable` should include Enumerable.')
     end
     if thread_count < 2
-      raise ArgumentError.new('`thread_count` can\'t be less than 2.')
+      fail ArgumentError.new('`thread_count` can\'t be less than 2.')
     end
     each(&block) if block
   end
@@ -145,7 +145,7 @@ class InThreads < Delegator
     # <tt>:ignore_undefined</tt> ignores methods which are not present in <tt>Enumerable.instance_methods</tt>
     def use(runner, options)
       methods = Array(options[:for])
-      raise 'no methods provided using :for option' if methods.empty?
+      fail 'no methods provided using :for option' if methods.empty?
       ignore_undefined = options[:ignore_undefined]
       enumerable_methods = Enumerable.instance_methods.map(&:to_s)
       methods.each do |method|
@@ -242,7 +242,7 @@ protected
       end
 
       begin
-        enum_b.send(method, *args) do |object|
+        enum_b.send(method, *args) do |_object|
           results.pop.value
         end
       ensure

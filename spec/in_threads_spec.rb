@@ -7,12 +7,12 @@ class Item
   end
 
   def ==(other)
-    self.id == other.id
+    id == other.id
   end
 
   class HalfMatcher
     def ===(item)
-      raise "#{item.inspect} is not an Item" unless item.is_a?(Item)
+      fail "#{item.inspect} is not an Item" unless item.is_a?(Item)
       (0.25..0.75) === item.instance_variable_get(:@value)
     end
   end
@@ -215,14 +215,14 @@ describe 'in_threads' do
 
       it 'should raise exception in outer thread' do
         check_test_exception(enum) do |threaded|
-          threaded.each{ raise TestException }
+          threaded.each{ fail TestException }
         end
       end
     end
 
     %w[each_with_index enum_with_index].each do |method|
       describe_enum_method method do
-        let(:runner){ proc{ |o, i| o.value } }
+        let(:runner){ proc{ |o, _i| o.value } }
 
         it 'should return same result with threads' do
           expect(enum.in_threads.send(method, &runner)).to eq(enum.send(method, &runner))
@@ -243,7 +243,7 @@ describe 'in_threads' do
 
         it 'should raise exception in outer thread' do
           check_test_exception(enum) do |threaded|
-            threaded.send(method){ raise TestException }
+            threaded.send(method){ fail TestException }
           end
         end
       end
@@ -277,7 +277,7 @@ describe 'in_threads' do
 
       it 'should raise exception in outer thread' do
         check_test_exception(enum) do |threaded|
-          threaded.reverse_each{ raise TestException }
+          threaded.reverse_each{ fail TestException }
         end
       end
     end
@@ -316,7 +316,7 @@ describe 'in_threads' do
 
         it 'should raise exception in outer thread' do
           check_test_exception(enum) do |threaded|
-            threaded.send(method){ raise TestException }
+            threaded.send(method){ fail TestException }
           end
         end
       end
@@ -339,7 +339,7 @@ describe 'in_threads' do
 
         it 'should raise exception in outer thread' do
           check_test_exception(enum) do |threaded|
-            threaded.send(method){ raise TestException }
+            threaded.send(method){ fail TestException }
           end
         end
       end
@@ -362,7 +362,7 @@ describe 'in_threads' do
 
         it 'should raise exception in outer thread' do
           check_test_exception(enum) do |threaded|
-            threaded.send(method){ raise TestException }
+            threaded.send(method){ fail TestException }
           end
         end
       end
@@ -391,7 +391,7 @@ describe 'in_threads' do
 
         it 'should raise exception in outer thread' do
           check_test_exception(enum) do |threaded|
-            threaded.send(method, 3){ raise TestException }
+            threaded.send(method, 3){ fail TestException }
           end
         end
       end
@@ -419,7 +419,7 @@ describe 'in_threads' do
 
       it 'should raise exception in outer thread' do
         check_test_exception(enum) do |threaded|
-          threaded.zip(enum, enum){ raise TestException }
+          threaded.zip(enum, enum){ fail TestException }
         end
       end
     end
@@ -440,7 +440,7 @@ describe 'in_threads' do
 
       it 'should raise exception in outer thread' do
         check_test_exception(enum) do |threaded|
-          threaded.cycle{ raise TestException }
+          threaded.cycle{ fail TestException }
         end
       end
     end
@@ -467,7 +467,7 @@ describe 'in_threads' do
 
       it 'should raise exception in outer thread' do
         check_test_exception(enum) do |threaded|
-          threaded.grep(matcher){ raise TestException }
+          threaded.grep(matcher){ fail TestException }
         end
       end
     end
@@ -508,7 +508,7 @@ describe 'in_threads' do
 
       it 'should raise exception in outer thread' do
         check_test_exception(enum) do |threaded|
-          threaded.each_entry{ raise TestException }
+          threaded.each_entry{ fail TestException }
         end
       end
     end
@@ -537,7 +537,7 @@ describe 'in_threads' do
 
         it 'should raise exception in outer thread' do
           check_test_exception(enum) do |threaded|
-            threaded.send(method){ raise TestException }
+            threaded.send(method){ fail TestException }
           end
         end
       end
@@ -553,7 +553,7 @@ describe 'in_threads' do
 
           it 'should raise exception in outer thread' do
             check_test_exception(enum) do |threaded|
-              threaded.send(method){ raise TestException }
+              threaded.send(method){ fail TestException }
             end
           end
         end
@@ -568,7 +568,7 @@ describe 'in_threads' do
 
           it 'should raise exception in outer thread' do
             check_test_exception(enum) do |threaded|
-              threaded.send(method){ raise TestException }
+              threaded.send(method){ fail TestException }
             end
           end
         end
@@ -616,7 +616,7 @@ describe 'in_threads' do
 
         it 'should raise exception in outer thread' do
           check_test_exception(enum) do |threaded|
-            threaded.each_with_object({}){ raise TestException }
+            threaded.each_with_object({}){ fail TestException }
           end
         end
       end
@@ -629,7 +629,7 @@ describe 'in_threads' do
 
           it 'should raise exception in outer thread' do
             check_test_exception(enum) do |threaded|
-              threaded.send(method){ raise TestException }.to_a
+              threaded.send(method){ fail TestException }.to_a
             end
           end
         end
