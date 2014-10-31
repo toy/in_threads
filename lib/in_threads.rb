@@ -36,7 +36,7 @@ class InThreads < Delegator
         unless ignore_undefined && !enumerable_methods.include?(method)
           class_eval <<-RUBY
             def #{method}(*args, &block)
-              #{runner}(enumerable, :#{method}, *args, &block)
+              #{runner}(:#{method}, *args, &block)
             end
           RUBY
         end
@@ -74,7 +74,7 @@ class InThreads < Delegator
   # Special case method, works by applying <tt>run_in_threads_consecutive</tt> with map on enumerable returned by blockless run
   def grep(*args, &block)
     if block
-      run_in_threads_consecutive(enumerable.grep(*args), :map, &block)
+      self.class.new(enumerable.grep(*args), thread_count).map(&block)
     else
       enumerable.grep(*args)
     end
@@ -96,7 +96,7 @@ protected
   end
 
   # Use for methods which don't use block result
-  def run_in_threads_return_original_enum(enumerable, method, *args, &block)
+  def run_in_threads_return_original_enum(method, *args, &block)
     if block
       ThreadLimiter.limit(thread_count) do |limiter|
         enumerable.send(method, *args) do |*block_args|
@@ -109,7 +109,7 @@ protected
   end
 
   # Use for methods which do use block result and fire objects in same way as <tt>each</tt>
-  def run_in_threads_consecutive(enumerable, method, *args, &block)
+  def run_in_threads_consecutive(method, *args, &block)
     if block
       begin
         enum_a, enum_b = Filler.new(enumerable, 2).extractors
@@ -138,7 +138,7 @@ protected
   end
 
   # Use for methods which don't use blocks or can not use threads
-  def run_without_threads(enumerable, method, *args, &block)
+  def run_without_threads(method, *args, &block)
     enumerable.send(method, *args, &block)
   end
 end
