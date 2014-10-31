@@ -1,9 +1,9 @@
 require 'spec_helper'
 require 'in_threads'
 
-class Item
-  def initialize(i)
-    @i, @value = i, Kernel.rand
+class ValueItem
+  def initialize(i, value)
+    @i, @value = i, value
   end
 
   def ==(other)
@@ -12,7 +12,7 @@ class Item
 
   class HalfMatcher
     def ===(item)
-      fail "#{item.inspect} is not an Item" unless item.is_a?(Item)
+      fail "#{item.inspect} is not an Item" unless item.is_a?(ValueItem)
       (0.25..0.75) === item.instance_variable_get(:@value)
     end
   end
@@ -22,7 +22,7 @@ class Item
   end
 
   def check?
-    value < 0.5
+    !!value
   end
 
   def touch_n_value(*args)
@@ -46,17 +46,13 @@ private
   end
 end
 
-class ValueItem < Item
-  def initialize(i, value)
-    @i, @value = i, value
-  end
-
-  def value
-    sleep; @value
+class RandItem < ValueItem
+  def initialize(i)
+    super(i, Kernel.rand)
   end
 
   def check?
-    !!value
+    value < 0.5
   end
 end
 
@@ -84,7 +80,7 @@ def describe_enum_method(method, &block)
 end
 
 describe 'in_threads' do
-  let(:enum){ 30.times.map{ |i| Item.new(i) } }
+  let(:enum){ 30.times.map{ |i| RandItem.new(i) } }
   let(:speed_coef){ 0.666 } # small coefficient, should be more if sleep time coefficient is bigger
 
   def measure
@@ -446,7 +442,7 @@ describe 'in_threads' do
     end
 
     describe 'grep' do
-      let(:matcher){ Item::HalfMatcher.new }
+      let(:matcher){ ValueItem::HalfMatcher.new }
 
       it 'should fire same objects' do
         enum.each{ |o| expect(o).to receive(:touch).exactly(matcher === o ? 1 : 0).times }
@@ -515,7 +511,7 @@ describe 'in_threads' do
 
     %w[flat_map collect_concat].each do |method|
       describe_enum_method method do
-        let(:enum){ 20.times.map{ |i| Item.new(i) }.each_slice(3) }
+        let(:enum){ 20.times.map{ |i| RandItem.new(i) }.each_slice(3) }
         let(:runner){ proc{ |a| a.map(&:value) } }
 
         it 'should return same result with threads' do
