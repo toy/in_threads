@@ -111,20 +111,21 @@ protected
   # Use for methods which do use block result and fire objects in same way as <tt>each</tt>
   def run_in_threads_consecutive(method, *args, &block)
     if block
-      begin
-        enum_a, enum_b = Filler.new(enumerable, 2).extractors
-        results = Queue.new
-        runner = Thread.new do
-          Thread.current.priority = -1
-          ThreadLimiter.limit(thread_count) do |limiter|
-            enum_a.each do |object|
-              break if Thread.current[:stop]
-              thread = Thread.new(object, &block)
-              results << thread
-              limiter << thread
-            end
+      enum_a, enum_b = Filler.new(enumerable, 2).extractors
+      results = Queue.new
+      runner = Thread.new do
+        Thread.current.priority = -1
+        ThreadLimiter.limit(thread_count) do |limiter|
+          enum_a.each do |object|
+            break if Thread.current[:stop]
+            thread = Thread.new(object, &block)
+            results << thread
+            limiter << thread
           end
         end
+      end
+
+      begin
         enum_b.send(method, *args) do |object|
           results.pop.value
         end
