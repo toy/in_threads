@@ -60,6 +60,15 @@ class ValueItem < Item
   end
 end
 
+module CustomEnum
+  def self.new(&block)
+    Class.new do
+      include Enumerable
+      define_method :each, &block
+    end.new
+  end
+end
+
 def describe_enum_method(method, &block)
   @enum_methods ||= Enumerable.instance_methods.map(&:to_s)
   if @enum_methods.include?(method)
@@ -146,16 +155,13 @@ describe 'in_threads' do
     end
 
     describe 'underlying enumerable usage' do
-      class CheckEachCalls
-        include Enumerable
-
-        def each
+      let(:enum) do
+        CustomEnum.new do |&block|
           100.times.each do |i|
-            yield ValueItem.new(i, i < 50)
+            block[ValueItem.new(i, i < 50)]
           end
         end
       end
-      let(:enum){ CheckEachCalls.new }
 
       %w[each map all?].each do |method|
         it "should call underlying enumerable.each only once for #{method}" do
@@ -460,16 +466,13 @@ describe 'in_threads' do
     end
 
     describe_enum_method 'each_entry' do
-      class EachEntryYielder
-        include Enumerable
-        def each
-          10.times{ yield 1 }
-          10.times{ yield 2, 3 }
-          10.times{ yield 4, 5, 6 }
+      let(:enum) do
+        CustomEnum.new do |&block|
+          10.times{ block[1] }
+          10.times{ block[2, 3] }
+          10.times{ block[4, 5, 6] }
         end
       end
-
-      let(:enum){ EachEntryYielder.new }
       let(:runner){ proc{ |o| ValueItem.new(0, o).value } }
 
       it 'should return same result with threads' do
