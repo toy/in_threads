@@ -2,7 +2,7 @@ require 'thread'
 require 'thwait'
 require 'delegate'
 
-module Enumerable
+Enumerable.class_eval do
   # Run enumerable method blocks in threads
   #
   #   urls.in_threads.map do |url|
@@ -17,11 +17,11 @@ module Enumerable
   #
   # Passing block runs it against <tt>each</tt>
   #
-  #   urls.in_threads.each{ … }
+  #   urls.in_threads.each{ ... }
   #
   # is same as
   #
-  #   urls.in_threads{ … }
+  #   urls.in_threads{ ... }
   def in_threads(thread_count = 10, &block)
     InThreads.new(self, thread_count, &block)
   end
@@ -107,10 +107,10 @@ class InThreads < SimpleDelegator
     # Enums receiving items
     attr_reader :enums
 
-    def initialize(enum, enum_count)
+    def initialize(enumerable, enum_count)
       @enums = Array.new(enum_count){ Transfer.new }
       @filler = Thread.new do
-        enum.each do |o|
+        enumerable.each do |o|
           @enums.each do |enum|
             enum << o
           end
@@ -125,10 +125,10 @@ class InThreads < SimpleDelegator
     super(enumerable)
     @enumerable, @thread_count = enumerable, thread_count.to_i
     unless enumerable.is_a?(Enumerable)
-      fail ArgumentError.new('`enumerable` should include Enumerable.')
+      fail ArgumentError, '`enumerable` should include Enumerable.'
     end
     if thread_count < 2
-      fail ArgumentError.new('`thread_count` can\'t be less than 2.')
+      fail ArgumentError, '`thread_count` can\'t be less than 2.'
     end
     each(&block) if block
   end
@@ -151,13 +151,12 @@ class InThreads < SimpleDelegator
       ignore_undefined = options[:ignore_undefined]
       enumerable_methods = Enumerable.instance_methods.map(&:to_s)
       methods.each do |method|
-        unless ignore_undefined && !enumerable_methods.include?(method)
-          class_eval <<-RUBY
-            def #{method}(*args, &block)
-              #{runner}(:#{method}, *args, &block)
-            end
-          RUBY
-        end
+        next if ignore_undefined && !enumerable_methods.include?(method)
+        class_eval <<-RUBY
+          def #{method}(*args, &block)
+            #{runner}(:#{method}, *args, &block)
+          end
+        RUBY
       end
     end
   end

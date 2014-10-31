@@ -1,7 +1,9 @@
 require 'spec_helper'
 require 'in_threads'
 
+# Test item with value
 class ValueItem
+  # Use fast_check? for matching
   module FastCheckMatcher
     def self.===(item)
       unless item.respond_to?(:fast_check?)
@@ -54,6 +56,7 @@ private
   end
 end
 
+# Test item with random value
 class RandItem < ValueItem
   def initialize(i)
     super(i, Kernel.rand)
@@ -64,6 +67,7 @@ class RandItem < ValueItem
   end
 end
 
+# Create custom Enumerables
 module CustomEnum
   def self.new(&block)
     Class.new do
@@ -291,7 +295,7 @@ describe 'in_threads' do
       detect find find_index drop_while take_while
     ].each do |method|
       describe method do
-        let(:enum){ 100.times.map{ |i| ValueItem.new(i, i % 2 == 1) } }
+        let(:enum){ 100.times.map{ |i| ValueItem.new(i, i.odd?) } }
 
         it 'should return same result with threads' do
           expect(enum.in_threads.send(method, &:check?)).to eq(enum.send(method, &:check?))
@@ -453,7 +457,7 @@ describe 'in_threads' do
       let(:matcher){ ValueItem::FastCheckMatcher }
 
       it 'should fire same objects' do
-        enum.each{ |o| expect(o).to receive(:touch).exactly(matcher === o ? 1 : 0).times }
+        enum.each{ |o| expect(o).to receive(:touch).exactly(o.fast_check? ? 1 : 0).times }
         enum.in_threads.grep(matcher, &:touch_n_value)
       end
 
