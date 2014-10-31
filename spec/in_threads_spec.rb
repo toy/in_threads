@@ -2,6 +2,15 @@ require 'spec_helper'
 require 'in_threads'
 
 class ValueItem
+  module FastCheckMatcher
+    def self.===(item)
+      unless item.respond_to?(:fast_check?)
+        fail "#{item.inspect} doesn't respont to fast_check?"
+      end
+      item.fast_check?
+    end
+  end
+
   def initialize(i, value)
     @i, @value = i, value
   end
@@ -10,19 +19,18 @@ class ValueItem
     id == other.id
   end
 
-  class HalfMatcher
-    def ===(item)
-      fail "#{item.inspect} is not an Item" unless item.is_a?(ValueItem)
-      (0.25..0.75) === item.instance_variable_get(:@value)
-    end
-  end
-
   def value
-    sleep; @value
+    sleep
+    @value
   end
 
   def check?
-    !!value
+    sleep
+    fast_check?
+  end
+
+  def fast_check?
+    !!@value
   end
 
   def touch_n_value(*args)
@@ -51,8 +59,8 @@ class RandItem < ValueItem
     super(i, Kernel.rand)
   end
 
-  def check?
-    value < 0.5
+  def fast_check?
+    @value < 0.5
   end
 end
 
@@ -442,7 +450,7 @@ describe 'in_threads' do
     end
 
     describe 'grep' do
-      let(:matcher){ ValueItem::HalfMatcher.new }
+      let(:matcher){ ValueItem::FastCheckMatcher }
 
       it 'should fire same objects' do
         enum.each{ |o| expect(o).to receive(:touch).exactly(matcher === o ? 1 : 0).times }
