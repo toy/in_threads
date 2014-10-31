@@ -1,7 +1,122 @@
 require 'thread'
+require 'thwait'
 require 'delegate'
 
+module Enumerable
+  # Run enumerable method blocks in threads
+  #
+  #   urls.in_threads.map do |url|
+  #     url.fetch
+  #   end
+  #
+  # Specify number of threads to use:
+  #
+  #   files.in_threads(4).all? do |file|
+  #     file.valid?
+  #   end
+  #
+  # Passing block runs it against <tt>each</tt>
+  #
+  #   urls.in_threads.each{ … }
+  #
+  # is same as
+  #
+  #   urls.in_threads{ … }
+  def in_threads(thread_count = 10, &block)
+    InThreads.new(self, thread_count, &block)
+  end
+end
+
 class InThreads < Delegator
+  # Use ThreadsWait to limit number of threads
+  class ThreadLimiter
+    # Initialize with limit
+    def initialize(count)
+      @count = count
+      @waiter = ThreadsWait.new
+    end
+
+    # Without block behaves as <tt>new</tt>
+    # With block yields it with <tt>self</tt> and ensures running of <tt>finalize</tt>
+    def self.limit(count, &block)
+      limiter = new(count)
+      if block
+        begin
+          yield limiter
+        ensure
+          limiter.finalize
+        end
+      else
+        limiter
+      end
+    end
+
+    # Add thread to <tt>ThreadsWait</tt>, wait for finishing of one thread if limit reached
+    def <<(thread)
+      if @waiter.threads.length + 1 >= @count
+        @waiter.join(thread).join
+      else
+        @waiter.join_nowait(thread)
+      end
+    end
+
+    # Wait for waiting threads
+    def finalize
+      @waiter.all_waits(&:join)
+    end
+  end
+
+  class Filler
+    class Extractor
+      include Enumerable
+
+      def initialize(filler)
+        @filler = filler
+        @queue = []
+      end
+
+      def push(o)
+        @queue.push(o)
+      end
+
+      def each
+        begin
+          loop do
+            while @filler.synchronize{ @queue.empty? }
+              @filler.run
+            end
+            yield @filler.synchronize{ @queue.shift }
+          end
+        rescue ThreadError => e
+        end
+        nil # non reusable
+      end
+    end
+
+    attr_reader :extractors
+    def initialize(enum, extractor_count)
+      @extractors = Array.new(extractor_count){ Extractor.new(self) }
+      @mutex = Mutex.new
+      @filler = Thread.new do
+        enum.each do |o|
+          synchronize do
+            @extractors.each do |extractor|
+              extractor.push(o)
+            end
+          end
+        end
+      end
+    end
+
+    def run
+      @filler.run
+    end
+
+    def synchronize(&block)
+      @mutex.synchronize(&block)
+    end
+  end
+
   attr_reader :enumerable, :thread_count
   def initialize(enumerable, thread_count = 10, &block)
     super(enumerable)
@@ -143,7 +258,3 @@ protected
     enumerable.send(method, *args, &block)
   end
 end
-
-require 'in_threads/enumerable'
-require 'in_threads/filler'
-require 'in_threads/thread_limiter'
