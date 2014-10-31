@@ -89,7 +89,7 @@ describe 'in_threads' do
       end
 
       [1..10, 10.times, {}, []].each do |o|
-        it "should complain about using with #{o.class}" do
+        it "should not complain about using with #{o.class}" do
           expect{ InThreads.new(o) }.not_to raise_error
         end
       end
