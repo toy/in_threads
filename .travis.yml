@@ -8,8 +8,9 @@ rvm:
   - jruby-18mode
   - jruby-19mode
   - ree
-script:
-  - bundle exec rspec
-  - '! bundle show rubocop || bundle exec rubocop' # run rubocop only if bundled
+script: test -n "$RUBOCOP" && bundle exec rspec || bundle exec rubocop
 matrix:
   fast_finish: true
+  include:
+    - env: RUBOCOP=true
+      rvm: default
