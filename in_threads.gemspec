@@ -17,6 +17,6 @@ Gem::Specification.new do |s|
 
   s.add_development_dependency 'rspec', '~> 3.0'
   if Gem::Version.new(RUBY_VERSION) >= Gem::Version.new('1.9.3')
-    s.add_development_dependency 'rubocop', '~> 0.26.0'
+    s.add_development_dependency 'rubocop', '~> 0.26'
   end
 end
