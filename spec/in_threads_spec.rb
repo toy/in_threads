@@ -67,16 +67,6 @@ class RandItem < ValueItem
   end
 end
 
-# Create custom Enumerables
-module CustomEnum
-  def self.new(&block)
-    Class.new do
-      include Enumerable
-      define_method :each, &block
-    end.new
-  end
-end
-
 class TestException < StandardError; end
 
 def describe_enum_method(method, &block)
@@ -172,11 +162,7 @@ describe 'in_threads' do
     describe 'underlying enumerable usage' do
       %w[each map all?].each do |method|
         it "should call underlying enumerable.each only once for #{method}" do
-          enum = CustomEnum.new do |&block|
-            100.times.each do |i|
-              block[ValueItem.new(i, i < 50)]
-            end
-          end
+          enum = 100.times.map{ |i| ValueItem.new(i, i < 50) }
 
           expect(enum).to receive(:each).once.and_call_original
           enum.in_threads(13).send(method, &:check?)
@@ -184,8 +170,9 @@ describe 'in_threads' do
       end
 
       it 'should not yield all elements when not needed' do
-        enum = CustomEnum.new do |&block|
-          100.times{ block[1] }
+        enum = []
+        def enum.each
+          100.times{ yield 1 }
           fail
         end
 
@@ -522,10 +509,12 @@ describe 'in_threads' do
 
     describe_enum_method 'each_entry' do
       let(:enum) do
-        CustomEnum.new do |&block|
-          10.times{ block[1] }
-          10.times{ block[2, 3] }
-          10.times{ block[4, 5, 6] }
+        [].tap do |enum|
+          def enum.each
+            10.times{ yield 1 }
+            10.times{ yield 2, 3 }
+            10.times{ yield 4, 5, 6 }
+          end
         end
       end
       let(:runner){ proc{ |o| ValueItem.new(0, o).value } }
