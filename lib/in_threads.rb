@@ -183,12 +183,12 @@ class InThreads < SimpleDelegator
   INCOMPATIBLE_METHODS = %w[
     inject reduce
     max min minmax sort
-    entries to_a to_set
+    entries to_a to_set to_h
     drop take
     first
     include? member?
     each_with_object
-    chunk slice_before
+    chunk slice_before slice_after slice_when
   ].map(&:to_sym)
 
   # Special case method, works by applying `run_in_threads_consecutive` with
