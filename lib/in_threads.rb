@@ -179,7 +179,8 @@ class InThreads < SimpleDelegator
     collect map group_by max_by min_by minmax_by sort_by
     flat_map collect_concat
   ], :ignore_undefined => true
-  use :run_without_threads, :for => %w[
+
+  INCOMPATIBLE_METHODS = %w[
     inject reduce
     max min minmax sort
     entries to_a to_set
@@ -188,7 +189,7 @@ class InThreads < SimpleDelegator
     include? member?
     each_with_object
     chunk slice_before
-  ], :ignore_undefined => true
+  ].map(&:to_sym)
 
   # Special case method, works by applying `run_in_threads_consecutive` with
   # map on enumerable returned by blockless run
@@ -248,10 +249,5 @@ protected
     else
       enumerable.send(method, *args)
     end
-  end
-
-  # Use for methods which don't use blocks or can not use threads
-  def run_without_threads(method, *args, &block)
-    enumerable.send(method, *args, &block)
   end
 end

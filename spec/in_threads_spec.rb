@@ -182,9 +182,9 @@ describe 'in_threads' do
   end
 
   describe 'methods' do
-    enumerable_methods = Enumerable.instance_methods
-    in_threads_methods = 10.times.in_threads.class.instance_methods
-    (enumerable_methods - in_threads_methods).each do |method|
+    missing_methods =
+      (Enumerable.instance_methods - InThreads.instance_methods).map(&:to_sym)
+    (missing_methods - InThreads::INCOMPATIBLE_METHODS).each do |method|
       pending method
     end
 
