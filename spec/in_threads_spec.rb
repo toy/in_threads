@@ -203,12 +203,12 @@ describe 'in_threads' do
         enum.in_threads.each(&:touch_n_value)
       end
 
-      it 'should run faster with threads' do
+      it 'should run faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.each(&:value) }).
           to be < measure{ enum.each(&:value) } * speed_coef
       end
 
-      it 'should run faster with more threads' do
+      it 'should run faster with more threads', :retry => 3 do
         expect(measure{ enum.in_threads(10).each(&:value) }).
           to be < measure{ enum.in_threads(2).each(&:value) } * speed_coef
       end
@@ -238,7 +238,7 @@ describe 'in_threads' do
           enum.in_threads.send(method){ |o, i| o.touch_n_value(i) }
         end
 
-        it 'should run faster with threads' do
+        it 'should run faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, &runner) }).
             to be < measure{ enum.send(method, &runner) } * speed_coef
         end
@@ -275,7 +275,7 @@ describe 'in_threads' do
         end
       end
 
-      it 'should run faster with threads' do
+      it 'should run faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.reverse_each(&:value) }).
           to be < measure{ enum.reverse_each(&:value) } * speed_coef
       end
@@ -321,7 +321,7 @@ describe 'in_threads' do
           expect(@a.length).to be <= enum.length * 0.5
         end
 
-        it 'should run faster with threads' do
+        it 'should run faster with threads', :retry => 3 do
           boolean = %w[all? drop_while take_while].include?(method)
           enum = 30.times.map{ |i| ValueItem.new(i, boolean) }
           expect(measure{ enum.in_threads.send(method, &:check?) }).
@@ -348,7 +348,7 @@ describe 'in_threads' do
           enum.in_threads.send(method, &:touch_n_check?)
         end
 
-        it 'should run faster with threads' do
+        it 'should run faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, &:check?) }).
             to be < measure{ enum.send(method, &:check?) } * speed_coef
         end
@@ -373,7 +373,7 @@ describe 'in_threads' do
           enum.in_threads.send(method, &:touch_n_value)
         end
 
-        it 'should run faster with threads' do
+        it 'should run faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, &:value) }).
             to be < measure{ enum.send(method, &:value) } * speed_coef
         end
@@ -402,7 +402,7 @@ describe 'in_threads' do
             to eq(enum.send(method, 3, &runner))
         end
 
-        it 'should run faster with threads' do
+        it 'should run faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, 3, &runner) }).
             to be < measure{ enum.send(method, 3, &runner) } * speed_coef
         end
@@ -438,7 +438,7 @@ describe 'in_threads' do
           to eq(enum.zip(enum, enum, &runner))
       end
 
-      it 'should run faster with threads' do
+      it 'should run faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.zip(enum, enum, &runner) }).
           to be < measure{ enum.zip(enum, enum, &runner) } * speed_coef
       end
@@ -460,7 +460,7 @@ describe 'in_threads' do
         enum.in_threads.cycle(3, &:touch_n_value)
       end
 
-      it 'should run faster with threads' do
+      it 'should run faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.cycle(3, &:value) }).
           to be < measure{ enum.cycle(3, &:value) } * speed_coef
       end
@@ -491,7 +491,7 @@ describe 'in_threads' do
           to eq(enum.grep(matcher, &:value))
       end
 
-      it 'should run faster with threads' do
+      it 'should run faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.grep(matcher, &:value) }).
           to be < measure{ enum.grep(matcher, &:value) } * speed_coef
       end
@@ -536,7 +536,7 @@ describe 'in_threads' do
         end
       end
 
-      it 'should run faster with threads' do
+      it 'should run faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.each_entry(&runner) }).
           to be < measure{ enum.each_entry(&runner) } * speed_coef
       end
@@ -576,7 +576,7 @@ describe 'in_threads' do
           end
         end
 
-        it 'should run faster with threads' do
+        it 'should run faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, &runner) }).
             to be < measure{ enum.send(method, &runner) } * speed_coef
         end
