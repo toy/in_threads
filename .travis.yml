@@ -6,8 +6,8 @@ rvm:
   - '2.0'
   - '2.1'
   - '2.2'
-  - jruby-1.7.17-18mode
-  - jruby-1.7.17-19mode
+  - jruby-18mode
+  - jruby-19mode
   - ree
 script:
   if [ -z "$RUBOCOP" ]; then
