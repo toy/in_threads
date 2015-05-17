@@ -18,7 +18,7 @@ class ValueItem
   end
 
   def ==(other)
-    id == other.id if self.class === other
+    id == other.id if other.is_a?(self.class)
   end
 
   def value
