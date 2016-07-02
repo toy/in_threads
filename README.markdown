@@ -2,7 +2,7 @@
 [![Build Status](https://img.shields.io/travis/toy/in_threads/master.svg?style=flat)](https://travis-ci.org/toy/in_threads)
 [![Code Climate](https://img.shields.io/codeclimate/github/toy/in_threads.svg?style=flat)](https://codeclimate.com/github/toy/in_threads)
 [![Dependency Status](https://img.shields.io/gemnasium/toy/in_threads.svg?style=flat)](https://gemnasium.com/toy/in_threads)
-[![Inch CI](http://inch-ci.org/github/toy/in_threads.svg?branch=master&style=flat)](http://inch-ci.org/github/toy/in_threads)
+[![Inch CI](https://inch-ci.org/github/toy/in_threads.svg?branch=master&style=flat)](https://inch-ci.org/github/toy/in_threads)
 
 # in_threads
 
