@@ -84,7 +84,7 @@ def describe_enum_method(method, &block)
 end
 
 describe 'in_threads' do
-  let(:enum){ 30.times.map{ |i| RandItem.new(i) } }
+  let(:enum){ Array.new(30){ |i| RandItem.new(i) } }
 
   # small coefficient, should be more if sleep time coefficient is bigger
   let(:speed_coef){ 0.666 }
@@ -135,7 +135,7 @@ describe 'in_threads' do
     end
 
     describe 'thread count' do
-      let(:enum){ 100.times.map{ |i| ValueItem.new(i, i < 50) } }
+      let(:enum){ Array.new(100){ |i| ValueItem.new(i, i < 50) } }
 
       %w[each map all?].each do |method|
         it "should run in specified number of threads for #{method}" do
@@ -162,7 +162,7 @@ describe 'in_threads' do
     describe 'underlying enumerable usage' do
       %w[each map all?].each do |method|
         it "should call underlying enumerable.each only once for #{method}" do
-          enum = 100.times.map{ |i| ValueItem.new(i, i < 50) }
+          enum = Array.new(100){ |i| ValueItem.new(i, i < 50) }
 
           expect(enum).to receive(:each).once.and_call_original
           enum.in_threads(13).send(method, &:check?)
@@ -296,7 +296,7 @@ describe 'in_threads' do
       detect find find_index drop_while take_while
     ].each do |method|
       describe method do
-        let(:enum){ 100.times.map{ |i| ValueItem.new(i, i.odd?) } }
+        let(:enum){ Array.new(100){ |i| ValueItem.new(i, i.odd?) } }
 
         it 'should return same result with threads' do
           expect(enum.in_threads.send(method, &:check?)).
@@ -323,7 +323,7 @@ describe 'in_threads' do
 
         it 'should run faster with threads', :retry => 3 do
           boolean = %w[all? drop_while take_while].include?(method)
-          enum = 30.times.map{ |i| ValueItem.new(i, boolean) }
+          enum = Array.new(30){ |i| ValueItem.new(i, boolean) }
           expect(measure{ enum.in_threads.send(method, &:check?) }).
             to be < measure{ enum.send(method, &:check?) } * speed_coef
         end
@@ -554,7 +554,7 @@ describe 'in_threads' do
 
     %w[flat_map collect_concat].each do |method|
       describe_enum_method method do
-        let(:enum){ 20.times.map{ |i| RandItem.new(i) }.each_slice(3) }
+        let(:enum){ Array.new(20){ |i| RandItem.new(i) }.each_slice(3) }
         let(:runner){ proc{ |a| a.map(&:value) } }
 
         it 'should return same result with threads' do

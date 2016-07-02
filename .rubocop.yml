@@ -49,11 +49,17 @@ Style/PercentLiteralDelimiters:
 Style/Semicolon:
   AllowAsExpressionSeparator: true
 
+Style/SignalException:
+  EnforcedStyle: semantic
+
 Style/SpaceBeforeBlockBraces:
   EnforcedStyle: no_space
 
 Style/SpaceInsideHashLiteralBraces:
   EnforcedStyle: no_space
 
-Style/TrailingComma:
+Style/TrailingCommaInArguments:
+  EnforcedStyleForMultiline: no_comma
+
+Style/TrailingCommaInLiteral:
   EnforcedStyleForMultiline: comma
