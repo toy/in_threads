@@ -3,10 +3,14 @@ AllCops:
     - '*.gemspec'
 
 Lint/EndAlignment:
-  AlignWith: variable
+  EnforcedStyleAlignWith: variable
 
 Metrics/AbcSize:
   Max: 25
+
+Metrics/BlockLength:
+  Exclude:
+    - 'spec/**/*.rb'
 
 Metrics/ClassLength:
   Max: 150
@@ -21,7 +25,7 @@ Style/AccessModifierIndentation:
   EnforcedStyle: outdent
 
 Style/CaseIndentation:
-  IndentWhenRelativeTo: end
+  EnforcedStyle: end
 
 Style/DotPosition:
   EnforcedStyle: trailing
