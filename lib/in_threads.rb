@@ -204,7 +204,7 @@ protected
     if block
       ThreadLimiter.limit(thread_count) do |limiter|
         enumerable.send(method, *args) do |*block_args|
-          limiter << Thread.new(*block_args, &block)
+          limiter << Thread.new{ block.call(*block_args) }
         end
       end
     else
@@ -222,7 +222,7 @@ protected
         ThreadLimiter.limit(thread_count) do |limiter|
           enum_a.each do |object|
             break if Thread.current[:stop]
-            thread = Thread.new(object, &block)
+            thread = Thread.new{ block.call(object) }
             results << thread
             limiter << thread
           end

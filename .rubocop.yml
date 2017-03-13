@@ -18,6 +18,9 @@ Metrics/ClassLength:
 Metrics/MethodLength:
   Max: 25
 
+Performance/RedundantBlockCall:
+  Enabled: false
+
 Style/AccessModifierIndentation:
   EnforcedStyle: outdent
 
