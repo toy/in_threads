@@ -8,6 +8,7 @@ rvm:
   - '2.2.6'
   - '2.3.3'
   - '2.4.0'
+  - 'ruby-head'
   - 'jruby-1.7.26'
   - 'jruby-9.0.5.0'
   - 'jruby-9.1.5.0'
@@ -20,3 +21,5 @@ matrix:
     - env: CHECK_RUBIES=✓
       rvm: '2.4.0'
       script: bundle exec travis_check_rubies
+  allow_failures:
+    - rvm: 'ruby-head'
