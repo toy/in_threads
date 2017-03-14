@@ -74,7 +74,7 @@ def describe_enum_method(method, &block)
   if @enum_methods.include?(method)
     describe(method, &block)
   else
-    it 'should not be defined' do
+    it 'is not defined' do
       exception_regexp =
         /^undefined method `#{Regexp.escape(method)}' .*\bInThreads\b/
       expect{ enum.in_threads.send(method) }.
@@ -97,7 +97,7 @@ describe 'in_threads' do
 
   describe 'consistency' do
     describe 'verifying params' do
-      it 'should complain about using with non enumerable' do
+      it 'complains about using with non enumerable' do
         expect{ InThreads.new(1) }.to raise_error(ArgumentError)
       end
 
@@ -107,17 +107,17 @@ describe 'in_threads' do
         end
       end
 
-      it 'should complain about using less than 2 threads' do
+      it 'complains about using less than 2 threads' do
         expect{ 10.times.in_threads(1) }.to raise_error(ArgumentError)
       end
 
-      it 'should not complain about using 2 or more threads' do
+      it 'does not complain about using 2 or more threads' do
         expect{ 10.times.in_threads(2) }.not_to raise_error
       end
     end
 
     describe 'in_threads method' do
-      it 'should not change existing instance' do
+      it 'does not change existing instance' do
         threaded = enum.in_threads(10)
         expect{ threaded.in_threads(20) }.not_to change(threaded, :thread_count)
       end
@@ -169,7 +169,7 @@ describe 'in_threads' do
         end
       end
 
-      it 'should not yield all elements when not needed' do
+      it 'does not yield all elements when not needed' do
         enum = []
         def enum.each
           100.times{ yield 1 }
@@ -194,30 +194,30 @@ describe 'in_threads' do
     end
 
     describe 'each' do
-      it 'should return same enum after running' do
+      it 'returns same enum after running' do
         expect(enum.in_threads.each(&:value)).to eq(enum)
       end
 
-      it 'should execute block for each element' do
+      it 'executes block for each element' do
         enum.each{ |o| expect(o).to receive(:touch).once }
         enum.in_threads.each(&:touch_n_value)
       end
 
-      it 'should run faster with threads', :retry => 3 do
+      it 'runs faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.each(&:value) }).
           to be < measure{ enum.each(&:value) } * speed_coef
       end
 
-      it 'should run faster with more threads', :retry => 3 do
+      it 'runs faster with more threads', :retry => 3 do
         expect(measure{ enum.in_threads(10).each(&:value) }).
           to be < measure{ enum.in_threads(2).each(&:value) } * speed_coef
       end
 
-      it 'should return same enum without block' do
+      it 'returns same enum without block' do
         expect(enum.in_threads.each.to_a).to eq(enum.each.to_a)
       end
 
-      it 'should raise exception in outer thread' do
+      it 'raises exception in outer thread' do
         check_test_exception(enum) do |threaded|
           threaded.each{ fail TestException }
         end
@@ -228,27 +228,27 @@ describe 'in_threads' do
       describe_enum_method method do
         let(:runner){ proc{ |o, _i| o.value } }
 
-        it 'should return same result with threads' do
+        it 'returns same result with threads' do
           expect(enum.in_threads.send(method, &runner)).
             to eq(enum.send(method, &runner))
         end
 
-        it 'should fire same objects' do
+        it 'fires same objects' do
           enum.send(method){ |o, i| expect(o).to receive(:touch).with(i).once }
           enum.in_threads.send(method){ |o, i| o.touch_n_value(i) }
         end
 
-        it 'should run faster with threads', :retry => 3 do
+        it 'runs faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, &runner) }).
             to be < measure{ enum.send(method, &runner) } * speed_coef
         end
 
-        it 'should return same enum without block' do
+        it 'returns same enum without block' do
           expect(enum.in_threads.send(method).to_a).
             to eq(enum.send(method).to_a)
         end
 
-        it 'should raise exception in outer thread' do
+        it 'raises exception in outer thread' do
           check_test_exception(enum) do |threaded|
             threaded.send(method){ fail TestException }
           end
@@ -257,12 +257,12 @@ describe 'in_threads' do
     end
 
     describe 'reverse_each' do
-      it 'should return same result with threads' do
+      it 'returns same result with threads' do
         expect(enum.in_threads.reverse_each(&:value)).
           to eq(enum.reverse_each(&:value))
       end
 
-      it 'should fire same objects in reverse order' do
+      it 'fires same objects in reverse order' do
         @order = double('order', :notify => nil)
         expect(@order).to receive(:notify).with(enum.last).ordered
         expect(@order).to receive(:notify).with(enum[enum.length / 2]).ordered
@@ -275,16 +275,16 @@ describe 'in_threads' do
         end
       end
 
-      it 'should run faster with threads', :retry => 3 do
+      it 'runs faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.reverse_each(&:value) }).
           to be < measure{ enum.reverse_each(&:value) } * speed_coef
       end
 
-      it 'should return same enum without block' do
+      it 'returns same enum without block' do
         expect(enum.in_threads.reverse_each.to_a).to eq(enum.reverse_each.to_a)
       end
 
-      it 'should raise exception in outer thread' do
+      it 'raises exception in outer thread' do
         check_test_exception(enum) do |threaded|
           threaded.reverse_each{ fail TestException }
         end
@@ -298,12 +298,12 @@ describe 'in_threads' do
       describe method do
         let(:enum){ Array.new(100){ |i| ValueItem.new(i, i.odd?) } }
 
-        it 'should return same result with threads' do
+        it 'returns same result with threads' do
           expect(enum.in_threads.send(method, &:check?)).
             to eq(enum.send(method, &:check?))
         end
 
-        it 'should fire same objects but not all' do
+        it 'fires same objects but not all' do
           a = []
           enum.send(method) do |o|
             a << o
@@ -321,14 +321,14 @@ describe 'in_threads' do
           expect(@a.length).to be <= enum.length * 0.5
         end
 
-        it 'should run faster with threads', :retry => 3 do
+        it 'runs faster with threads', :retry => 3 do
           boolean = %w[all? drop_while take_while].include?(method)
           enum = Array.new(30){ |i| ValueItem.new(i, boolean) }
           expect(measure{ enum.in_threads.send(method, &:check?) }).
             to be < measure{ enum.send(method, &:check?) } * speed_coef
         end
 
-        it 'should raise exception in outer thread' do
+        it 'raises exception in outer thread' do
           check_test_exception(enum) do |threaded|
             threaded.send(method){ fail TestException }
           end
@@ -338,22 +338,22 @@ describe 'in_threads' do
 
     %w[partition find_all select reject count].each do |method|
       describe method do
-        it 'should return same result with threads' do
+        it 'returns same result with threads' do
           expect(enum.in_threads.send(method, &:check?)).
             to eq(enum.send(method, &:check?))
         end
 
-        it 'should fire same objects' do
+        it 'fires same objects' do
           enum.send(method){ |o| expect(o).to receive(:touch).once }
           enum.in_threads.send(method, &:touch_n_check?)
         end
 
-        it 'should run faster with threads', :retry => 3 do
+        it 'runs faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, &:check?) }).
             to be < measure{ enum.send(method, &:check?) } * speed_coef
         end
 
-        it 'should raise exception in outer thread' do
+        it 'raises exception in outer thread' do
           check_test_exception(enum) do |threaded|
             threaded.send(method){ fail TestException }
           end
@@ -363,22 +363,22 @@ describe 'in_threads' do
 
     %w[collect map group_by max_by min_by minmax_by sort_by].each do |method|
       describe method do
-        it 'should return same result with threads' do
+        it 'returns same result with threads' do
           expect(enum.in_threads.send(method, &:value)).
             to eq(enum.send(method, &:value))
         end
 
-        it 'should fire same objects' do
+        it 'fires same objects' do
           enum.send(method){ |o| expect(o).to receive(:touch).once; 0 }
           enum.in_threads.send(method, &:touch_n_value)
         end
 
-        it 'should run faster with threads', :retry => 3 do
+        it 'runs faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, &:value) }).
             to be < measure{ enum.send(method, &:value) } * speed_coef
         end
 
-        it 'should raise exception in outer thread' do
+        it 'raises exception in outer thread' do
           check_test_exception(enum) do |threaded|
             threaded.send(method){ fail TestException }
           end
@@ -390,29 +390,29 @@ describe 'in_threads' do
       describe_enum_method method do
         let(:runner){ proc{ |a| a.each(&:value) } }
 
-        it 'should fire same objects' do
+        it 'fires same objects' do
           enum.send(method, 3) do |a|
             expect(a.first).to receive(:touch).with(a).once
           end
           enum.in_threads.send(method, 3){ |a| a.first.touch_n_value(a) }
         end
 
-        it 'should return same with block' do
+        it 'returns same with block' do
           expect(enum.in_threads.send(method, 3, &runner)).
             to eq(enum.send(method, 3, &runner))
         end
 
-        it 'should run faster with threads', :retry => 3 do
+        it 'runs faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, 3, &runner) }).
             to be < measure{ enum.send(method, 3, &runner) } * speed_coef
         end
 
-        it 'should return same without block' do
+        it 'returns same without block' do
           expect(enum.in_threads.send(method, 3).to_a).
             to eq(enum.send(method, 3).to_a)
         end
 
-        it 'should raise exception in outer thread' do
+        it 'raises exception in outer thread' do
           check_test_exception(enum) do |threaded|
             threaded.send(method, 3){ fail TestException }
           end
@@ -423,7 +423,7 @@ describe 'in_threads' do
     describe 'zip' do
       let(:runner){ proc{ |a| a.each(&:value) } }
 
-      it 'should fire same objects' do
+      it 'fires same objects' do
         enum.zip(enum, enum) do |a|
           expect(a.first).to receive(:touch).with(a).once
         end
@@ -433,21 +433,21 @@ describe 'in_threads' do
         end
       end
 
-      it 'should return same with block' do
+      it 'returns same with block' do
         expect(enum.in_threads.zip(enum, enum, &runner)).
           to eq(enum.zip(enum, enum, &runner))
       end
 
-      it 'should run faster with threads', :retry => 3 do
+      it 'runs faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.zip(enum, enum, &runner) }).
           to be < measure{ enum.zip(enum, enum, &runner) } * speed_coef
       end
 
-      it 'should return same without block' do
+      it 'returns same without block' do
         expect(enum.in_threads.zip(enum, enum)).to eq(enum.zip(enum, enum))
       end
 
-      it 'should raise exception in outer thread' do
+      it 'raises exception in outer thread' do
         check_test_exception(enum) do |threaded|
           threaded.zip(enum, enum){ fail TestException }
         end
@@ -455,21 +455,21 @@ describe 'in_threads' do
     end
 
     describe 'cycle' do
-      it 'should fire same objects' do
+      it 'fires same objects' do
         enum.cycle(1){ |o| expect(o).to receive(:touch).exactly(3).times }
         enum.in_threads.cycle(3, &:touch_n_value)
       end
 
-      it 'should run faster with threads', :retry => 3 do
+      it 'runs faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.cycle(3, &:value) }).
           to be < measure{ enum.cycle(3, &:value) } * speed_coef
       end
 
-      it 'should return same enum without block' do
+      it 'returns same enum without block' do
         expect(enum.in_threads.cycle(3).to_a).to eq(enum.cycle(3).to_a)
       end
 
-      it 'should raise exception in outer thread' do
+      it 'raises exception in outer thread' do
         check_test_exception(enum) do |threaded|
           threaded.cycle{ fail TestException }
         end
@@ -479,28 +479,28 @@ describe 'in_threads' do
     describe 'grep' do
       let(:matcher){ ValueItem::FastCheckMatcher }
 
-      it 'should fire same objects' do
+      it 'fires same objects' do
         enum.each do |o|
           expect(o).to receive(:touch).exactly(o.fast_check? ? 1 : 0).times
         end
         enum.in_threads.grep(matcher, &:touch_n_value)
       end
 
-      it 'should return same with block' do
+      it 'returns same with block' do
         expect(enum.in_threads.grep(matcher, &:value)).
           to eq(enum.grep(matcher, &:value))
       end
 
-      it 'should run faster with threads', :retry => 3 do
+      it 'runs faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.grep(matcher, &:value) }).
           to be < measure{ enum.grep(matcher, &:value) } * speed_coef
       end
 
-      it 'should return same without block' do
+      it 'returns same without block' do
         expect(enum.in_threads.grep(matcher)).to eq(enum.grep(matcher))
       end
 
-      it 'should raise exception in outer thread' do
+      it 'raises exception in outer thread' do
         check_test_exception(enum) do |threaded|
           threaded.grep(matcher){ fail TestException }
         end
@@ -519,12 +519,12 @@ describe 'in_threads' do
       end
       let(:runner){ proc{ |o| ValueItem.new(0, o).value } }
 
-      it 'should return same result with threads' do
+      it 'returns same result with threads' do
         expect(enum.in_threads.each_entry(&runner)).
           to eq(enum.each_entry(&runner))
       end
 
-      it 'should execute block for each element' do
+      it 'executes block for each element' do
         @o = double('order')
         expect(@o).to receive(:notify).with(1).exactly(10).times.ordered
         expect(@o).to receive(:notify).with([2, 3]).exactly(10).times.ordered
@@ -536,16 +536,16 @@ describe 'in_threads' do
         end
       end
 
-      it 'should run faster with threads', :retry => 3 do
+      it 'runs faster with threads', :retry => 3 do
         expect(measure{ enum.in_threads.each_entry(&runner) }).
           to be < measure{ enum.each_entry(&runner) } * speed_coef
       end
 
-      it 'should return same enum without block' do
+      it 'returns same enum without block' do
         expect(enum.in_threads.each_entry.to_a).to eq(enum.each_entry.to_a)
       end
 
-      it 'should raise exception in outer thread' do
+      it 'raises exception in outer thread' do
         check_test_exception(enum) do |threaded|
           threaded.each_entry{ fail TestException }
         end
@@ -557,12 +557,12 @@ describe 'in_threads' do
         let(:enum){ Array.new(20){ |i| RandItem.new(i) }.each_slice(3) }
         let(:runner){ proc{ |a| a.map(&:value) } }
 
-        it 'should return same result with threads' do
+        it 'returns same result with threads' do
           expect(enum.in_threads.send(method, &runner)).
             to eq(enum.send(method, &runner))
         end
 
-        it 'should fire same objects' do
+        it 'fires same objects' do
           enum.send(method) do |a|
             a.each do |o|
               expect(o).to receive(:touch).with(a).once
@@ -576,17 +576,17 @@ describe 'in_threads' do
           end
         end
 
-        it 'should run faster with threads', :retry => 3 do
+        it 'runs faster with threads', :retry => 3 do
           expect(measure{ enum.in_threads.send(method, &runner) }).
             to be < measure{ enum.send(method, &runner) } * speed_coef
         end
 
-        it 'should return same enum without block' do
+        it 'returns same enum without block' do
           expect(enum.in_threads.send(method).to_a).
             to eq(enum.send(method).to_a)
         end
 
-        it 'should raise exception in outer thread' do
+        it 'raises exception in outer thread' do
           check_test_exception(enum) do |threaded|
             threaded.send(method){ fail TestException }
           end
@@ -597,13 +597,13 @@ describe 'in_threads' do
     context 'unthreaded' do
       %w[inject reduce].each do |method|
         describe method do
-          it 'should return same result' do
+          it 'returns same result' do
             combiner = proc{ |memo, o| memo + o.value }
             expect(enum.in_threads.send(method, 0, &combiner)).
               to eq(enum.send(method, 0, &combiner))
           end
 
-          it 'should raise exception in outer thread' do
+          it 'raises exception in outer thread' do
             check_test_exception(enum) do |threaded|
               threaded.send(method){ fail TestException }
             end
@@ -613,13 +613,13 @@ describe 'in_threads' do
 
       %w[max min minmax sort].each do |method|
         describe method do
-          it 'should return same result' do
+          it 'returns same result' do
             comparer = proc{ |a, b| a.value <=> b.value }
             expect(enum.in_threads.send(method, &comparer)).
               to eq(enum.send(method, &comparer))
           end
 
-          it 'should raise exception in outer thread' do
+          it 'raises exception in outer thread' do
             check_test_exception(enum) do |threaded|
               threaded.send(method){ fail TestException }
             end
@@ -629,7 +629,7 @@ describe 'in_threads' do
 
       %w[to_a entries].each do |method|
         describe method do
-          it 'should return same result' do
+          it 'returns same result' do
             expect(enum.in_threads.send(method)).to eq(enum.send(method))
           end
         end
@@ -637,7 +637,7 @@ describe 'in_threads' do
 
       %w[drop take].each do |method|
         describe method do
-          it 'should return same result' do
+          it 'returns same result' do
             expect(enum.in_threads.send(method, 2)).to eq(enum.send(method, 2))
           end
         end
@@ -645,7 +645,7 @@ describe 'in_threads' do
 
       %w[first].each do |method|
         describe method do
-          it 'should return same result' do
+          it 'returns same result' do
             expect(enum.in_threads.send(method)).to eq(enum.send(method))
             expect(enum.in_threads.send(method, 3)).to eq(enum.send(method, 3))
           end
@@ -654,7 +654,7 @@ describe 'in_threads' do
 
       %w[include? member?].each do |method|
         describe method do
-          it 'should return same result' do
+          it 'returns same result' do
             expect(enum.in_threads.send(method, enum[10])).
               to eq(enum.send(method, enum[10]))
           end
@@ -664,12 +664,12 @@ describe 'in_threads' do
       describe_enum_method 'each_with_object' do
         let(:runner){ proc{ |o, h| h[o.value] = true } }
 
-        it 'should return same result' do
+        it 'returns same result' do
           expect(enum.in_threads.each_with_object({}, &runner)).
             to eq(enum.each_with_object({}, &runner))
         end
 
-        it 'should raise exception in outer thread' do
+        it 'raises exception in outer thread' do
           check_test_exception(enum) do |threaded|
             threaded.each_with_object({}){ fail TestException }
           end
@@ -678,12 +678,12 @@ describe 'in_threads' do
 
       %w[chunk slice_before].each do |method|
         describe_enum_method method do
-          it 'should return same result' do
+          it 'returns same result' do
             expect(enum.in_threads.send(method, &:check?).to_a).
               to eq(enum.send(method, &:check?).to_a)
           end
 
-          it 'should raise exception in outer thread' do
+          it 'raises exception in outer thread' do
             check_test_exception(enum) do |threaded|
               threaded.send(method){ fail TestException }.to_a
             end
