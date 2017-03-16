@@ -526,9 +526,9 @@ describe 'in_threads' do
 
       it 'executes block for each element' do
         @o = double('order')
-        expect(@o).to receive(:notify).with(1).exactly(10).times.ordered
-        expect(@o).to receive(:notify).with([2, 3]).exactly(10).times.ordered
-        expect(@o).to receive(:notify).with([4, 5, 6]).exactly(10).times.ordered
+        expect(@o).to receive(:notify).with(1).exactly(10).times
+        expect(@o).to receive(:notify).with([2, 3]).exactly(10).times
+        expect(@o).to receive(:notify).with([4, 5, 6]).exactly(10).times
         @mutex = Mutex.new
         enum.in_threads.each_entry do |o|
           @mutex.synchronize{ @o.notify(o) }
