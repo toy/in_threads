@@ -74,15 +74,6 @@ class InThreads < SimpleDelegator
   class Splitter
     # Enumerable using Queue
     class Transfer
-      # Holds one object, for distinguishing eof
-      class Item
-        attr_reader :value
-
-        def initialize(value)
-          @value = value
-        end
-      end
-
       include Enumerable
 
       def initialize
@@ -90,7 +81,7 @@ class InThreads < SimpleDelegator
       end
 
       def <<(object)
-        @queue << Item.new(object)
+        @queue << [object]
       end
 
       def finish
@@ -99,7 +90,7 @@ class InThreads < SimpleDelegator
 
       def each
         while (o = @queue.pop)
-          yield o.value
+          yield o.first
         end
         nil # non reusable
       end
