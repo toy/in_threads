@@ -513,6 +513,7 @@ describe 'in_threads' do
       let(:enum) do
         [].tap do |enum|
           def enum.each
+            10.times{ yield }
             10.times{ yield 1 }
             10.times{ yield 2, 3 }
             10.times{ yield 4, 5, 6 }
@@ -528,11 +529,11 @@ describe 'in_threads' do
 
       it 'executes block for each element' do
         @o = double('order')
-        expect(@o).to receive(:notify).with(1).exactly(10).times
-        expect(@o).to receive(:notify).with([2, 3]).exactly(10).times
-        expect(@o).to receive(:notify).with([4, 5, 6]).exactly(10).times
+        enum.each_entry do |*o|
+          expect(@o).to receive(:notify).with(o)
+        end
         @mutex = Mutex.new
-        enum.in_threads.each_entry do |o|
+        enum.in_threads.each_entry do |*o|
           @mutex.synchronize{ @o.notify(o) }
           runner[]
         end
