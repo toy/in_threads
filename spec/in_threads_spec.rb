@@ -69,16 +69,18 @@ end
 
 class TestException < StandardError; end
 
+ENUM_METHODS = Enumerable.instance_methods.map(&:to_s)
 def describe_enum_method(method, &block)
-  @enum_methods ||= Enumerable.instance_methods.map(&:to_s)
-  if @enum_methods.include?(method)
-    describe(method, &block)
+  if ENUM_METHODS.include?(method)
+    describe "##{method}", &block
   else
-    it 'is not defined' do
-      exception_regexp =
-        /^undefined method `#{Regexp.escape(method)}' .*\bInThreads\b/
-      expect{ enum.in_threads.send(method) }.
-        to raise_error(NoMethodError, exception_regexp)
+    describe "##{method}" do
+      it 'is not defined' do
+        exception_regexp =
+          /^undefined method `#{Regexp.escape(method)}' .*\bInThreads\b/
+        expect{ enum.in_threads.send(method) }.
+          to raise_error(NoMethodError, exception_regexp)
+      end
     end
   end
 end
@@ -193,7 +195,7 @@ describe 'in_threads' do
       expect{ block[enum.in_threads(1000)] }.to raise_exception(TestException)
     end
 
-    describe 'each' do
+    describe '#each' do
       it 'returns same enum after running' do
         expect(enum.in_threads.each(&:value)).to eq(enum)
       end
@@ -256,7 +258,7 @@ describe 'in_threads' do
       end
     end
 
-    describe 'reverse_each' do
+    describe '#reverse_each' do
       it 'returns same result with threads' do
         expect(enum.in_threads.reverse_each(&:value)).
           to eq(enum.reverse_each(&:value))
@@ -295,7 +297,7 @@ describe 'in_threads' do
       all? any? none? one?
       detect find find_index drop_while take_while
     ].each do |method|
-      describe method do
+      describe "##{method}" do
         let(:enum){ Array.new(100){ |i| ValueItem.new(i, i.odd?) } }
 
         it 'returns same result with threads' do
@@ -337,7 +339,7 @@ describe 'in_threads' do
     end
 
     %w[partition find_all select reject count].each do |method|
-      describe method do
+      describe "##{method}" do
         it 'returns same result with threads' do
           expect(enum.in_threads.send(method, &:check?)).
             to eq(enum.send(method, &:check?))
@@ -362,7 +364,7 @@ describe 'in_threads' do
     end
 
     %w[collect map group_by max_by min_by minmax_by sort_by].each do |method|
-      describe method do
+      describe "##{method}" do
         it 'returns same result with threads' do
           expect(enum.in_threads.send(method, &:value)).
             to eq(enum.send(method, &:value))
@@ -420,7 +422,7 @@ describe 'in_threads' do
       end
     end
 
-    describe 'zip' do
+    describe '#zip' do
       let(:runner){ proc{ |a| a.each(&:value) } }
 
       it 'fires same objects' do
@@ -454,7 +456,7 @@ describe 'in_threads' do
       end
     end
 
-    describe 'cycle' do
+    describe '#cycle' do
       it 'fires same objects' do
         enum.cycle(1){ |o| expect(o).to receive(:touch).exactly(3).times }
         enum.in_threads.cycle(3, &:touch_n_value)
@@ -476,7 +478,7 @@ describe 'in_threads' do
       end
     end
 
-    describe 'grep' do
+    describe '#grep' do
       let(:matcher){ ValueItem::FastCheckMatcher }
 
       it 'fires same objects' do
@@ -596,7 +598,7 @@ describe 'in_threads' do
 
     context 'unthreaded' do
       %w[inject reduce].each do |method|
-        describe method do
+        describe "##{method}" do
           it 'returns same result' do
             combiner = proc{ |memo, o| memo + o.value }
             expect(enum.in_threads.send(method, 0, &combiner)).
@@ -612,7 +614,7 @@ describe 'in_threads' do
       end
 
       %w[max min minmax sort].each do |method|
-        describe method do
+        describe "##{method}" do
           it 'returns same result' do
             comparer = proc{ |a, b| a.value <=> b.value }
             expect(enum.in_threads.send(method, &comparer)).
@@ -628,7 +630,7 @@ describe 'in_threads' do
       end
 
       %w[to_a entries].each do |method|
-        describe method do
+        describe "##{method}" do
           it 'returns same result' do
             expect(enum.in_threads.send(method)).to eq(enum.send(method))
           end
@@ -636,7 +638,7 @@ describe 'in_threads' do
       end
 
       %w[drop take].each do |method|
-        describe method do
+        describe "##{method}" do
           it 'returns same result' do
             expect(enum.in_threads.send(method, 2)).to eq(enum.send(method, 2))
           end
@@ -644,7 +646,7 @@ describe 'in_threads' do
       end
 
       %w[first].each do |method|
-        describe method do
+        describe "##{method}" do
           it 'returns same result' do
             expect(enum.in_threads.send(method)).to eq(enum.send(method))
             expect(enum.in_threads.send(method, 3)).to eq(enum.send(method, 3))
@@ -653,7 +655,7 @@ describe 'in_threads' do
       end
 
       %w[include? member?].each do |method|
-        describe method do
+        describe "##{method}" do
           it 'returns same result' do
             expect(enum.in_threads.send(method, enum[10])).
               to eq(enum.send(method, enum[10]))
