@@ -181,6 +181,39 @@ describe 'in_threads' do
         enum.in_threads(13).all?{ false }
       end
     end
+
+    describe 'block arguments' do
+      let(:enum) do
+        [].tap do |enum|
+          def enum.each
+            yield
+            yield 1
+            yield 2, 3
+            yield 4, 5, 6
+          end
+        end
+      end
+
+      it 'passes all to methods ignoring block result' do
+        o = double
+        enum.each do |*args|
+          expect(o).to receive(:notify).with(args)
+        end
+        enum.in_threads.each do |*args|
+          o.notify(args)
+        end
+      end
+
+      it 'passes all to methods using block result' do
+        o = double
+        enum.each do |*args|
+          expect(o).to receive(:notify).with(args)
+        end
+        enum.in_threads.map do |*args|
+          o.notify(args)
+        end
+      end
+    end
   end
 
   describe 'methods' do

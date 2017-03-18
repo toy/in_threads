@@ -77,8 +77,8 @@ class InThreads < SimpleDelegator
         @queue = Queue.new
       end
 
-      def <<(object)
-        @queue << [object]
+      def <<(args)
+        @queue << args
       end
 
       def finish
@@ -86,8 +86,8 @@ class InThreads < SimpleDelegator
       end
 
       def each
-        while (o = @queue.pop)
-          yield o.first
+        while (args = @queue.pop)
+          yield(*args)
         end
         nil # non reusable
       end
@@ -99,9 +99,9 @@ class InThreads < SimpleDelegator
     def initialize(enumerable, enum_count)
       @enums = Array.new(enum_count){ Transfer.new }
       @filler = Thread.new do
-        enumerable.each do |o|
+        enumerable.each do |*args|
           @enums.each do |enum|
-            enum << o
+            enum << args
           end
         end
         @enums.each(&:finish)
@@ -217,9 +217,9 @@ protected
       runner = Thread.new do
         Thread.current.priority = -1
         ThreadLimiter.limit(thread_count) do |limiter|
-          enum_a.each do |object|
+          enum_a.each do |*block_args|
             break if Thread.current[:stop]
-            thread = Thread.new{ block.call(object) }
+            thread = Thread.new{ block.call(*block_args) }
             results << thread
             limiter << thread
           end
@@ -227,7 +227,7 @@ protected
       end
 
       begin
-        enum_b.send(method, *args) do |_object|
+        enum_b.send(method, *args) do
           results.pop.value
         end
       ensure
