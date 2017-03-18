@@ -57,11 +57,8 @@ class InThreads < SimpleDelegator
     # Add thread to `ThreadsWait`, wait for finishing of one thread if limit
     # reached
     def <<(thread)
-      if @waiter.threads.length + 1 >= @count
-        @waiter.join(thread).join
-      else
-        @waiter.join_nowait(thread)
-      end
+      @waiter.join_nowait(thread)
+      @waiter.next_wait.join unless @waiter.threads.length < @count
     end
 
     # Wait for waiting threads
