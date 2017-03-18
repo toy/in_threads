@@ -104,7 +104,7 @@ describe 'in_threads' do
       end
 
       [1..10, 10.times, {}, []].each do |o|
-        it "should not complain about using with #{o.class}" do
+        it "does not complain about using with #{o.class}" do
           expect{ InThreads.new(o) }.not_to raise_error
         end
       end
@@ -124,7 +124,7 @@ describe 'in_threads' do
         expect{ threaded.in_threads(20) }.not_to change(threaded, :thread_count)
       end
 
-      it 'should create new instance with different title when called on '\
+      it 'creates new instance with different title when called on '\
           'WithProgress' do
         threaded = enum.in_threads(10)
         tthreaded = threaded.in_threads(20)
@@ -140,7 +140,7 @@ describe 'in_threads' do
       let(:enum){ Array.new(100){ |i| ValueItem.new(i, i < 50) } }
 
       %w[each map all?].each do |method|
-        it "should run in specified number of threads for #{method}" do
+        it "runs in specified number of threads for #{method}" do
           @thread_count = 0
           @max_thread_count = 0
           @mutex = Mutex.new
@@ -163,7 +163,7 @@ describe 'in_threads' do
 
     describe 'underlying enumerable usage' do
       %w[each map all?].each do |method|
-        it "should call underlying enumerable.each only once for #{method}" do
+        it "calls underlying enumerable.each only once for #{method}" do
           enum = Array.new(100){ |i| ValueItem.new(i, i < 50) }
 
           expect(enum).to receive(:each).once.and_call_original
