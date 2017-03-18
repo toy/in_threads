@@ -85,9 +85,9 @@ class InThreads < SimpleDelegator
         @queue << nil
       end
 
-      def each
+      def each(&block)
         while (args = @queue.pop)
-          yield(*args)
+          block.call(*args)
         end
         nil # non reusable
       end
