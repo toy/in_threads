@@ -67,6 +67,20 @@ class RandItem < ValueItem
   end
 end
 
+# Pure class with Enumerable instead of Array
+class TestEnum
+  include Enumerable
+
+  def initialize(count, &block)
+    @items = Array.new(count){ |i| block[i] }
+  end
+
+  def each(&block)
+    @items.each(&block)
+    self
+  end
+end
+
 class TestException < StandardError; end
 
 ENUM_METHODS = Enumerable.instance_methods.map(&:to_s)
@@ -86,7 +100,8 @@ def describe_enum_method(method, &block)
 end
 
 describe 'in_threads' do
-  let(:enum){ Array.new(30){ |i| RandItem.new(i) } }
+  let(:items){ Array.new(30){ |i| RandItem.new(i) } }
+  let(:enum){ TestEnum.new(items) }
 
   # small coefficient, should be more if sleep time coefficient is bigger
   let(:speed_coef){ 0.666 }
@@ -137,7 +152,7 @@ describe 'in_threads' do
     end
 
     describe 'thread count' do
-      let(:enum){ Array.new(100){ |i| ValueItem.new(i, i < 50) } }
+      let(:items){ Array.new(100){ |i| ValueItem.new(i, i < 50) } }
 
       %w[each map all?].each do |method|
         it "runs in specified number of threads for #{method}" do
@@ -183,14 +198,12 @@ describe 'in_threads' do
     end
 
     describe 'block arguments' do
-      let(:enum) do
-        [].tap do |enum|
-          def enum.each
-            yield
-            yield 1
-            yield 2, 3
-            yield 4, 5, 6
-          end
+      before do
+        def enum.each
+          yield
+          yield 1
+          yield 2, 3
+          yield 4, 5, 6
         end
       end
 
@@ -299,10 +312,10 @@ describe 'in_threads' do
 
       it 'fires same objects in reverse order' do
         @order = double('order', :notify => nil)
-        expect(@order).to receive(:notify).with(enum.last).ordered
-        expect(@order).to receive(:notify).with(enum[enum.length / 2]).ordered
-        expect(@order).to receive(:notify).with(enum.first).ordered
-        enum.reverse_each{ |o| expect(o).to receive(:touch).once }
+        expect(@order).to receive(:notify).with(items.last).ordered
+        expect(@order).to receive(:notify).with(items[items.length / 2]).ordered
+        expect(@order).to receive(:notify).with(items.first).ordered
+        enum.each{ |o| expect(o).to receive(:touch).once }
         @mutex = Mutex.new
         enum.in_threads.reverse_each do |o|
           @mutex.synchronize{ @order.notify(o) }
@@ -331,7 +344,7 @@ describe 'in_threads' do
       detect find find_index drop_while take_while
     ].each do |method|
       describe "##{method}" do
-        let(:enum){ Array.new(100){ |i| ValueItem.new(i, i.odd?) } }
+        let(:items){ Array.new(100){ |i| ValueItem.new(i, i.odd?) } }
 
         it 'returns same result with threads' do
           expect(enum.in_threads.send(method, &:check?)).
@@ -353,7 +366,7 @@ describe 'in_threads' do
           end
 
           expect(@a.length).to be >= a.length
-          expect(@a.length).to be <= enum.length * 0.5
+          expect(@a.length).to be <= items.length * 0.5
         end
 
         it 'runs faster with threads', :retry => 3 do
@@ -550,14 +563,12 @@ describe 'in_threads' do
     end
 
     describe_enum_method 'each_entry' do
-      let(:enum) do
-        [].tap do |enum|
-          def enum.each
-            10.times{ yield }
-            10.times{ yield 1 }
-            10.times{ yield 2, 3 }
-            10.times{ yield 4, 5, 6 }
-          end
+      before do
+        def enum.each
+          10.times{ yield }
+          10.times{ yield 1 }
+          10.times{ yield 2, 3 }
+          10.times{ yield 4, 5, 6 }
         end
       end
       let(:runner){ proc{ |o| ValueItem.new(0, o).value } }
@@ -597,7 +608,7 @@ describe 'in_threads' do
 
     %w[flat_map collect_concat].each do |method|
       describe_enum_method method do
-        let(:enum){ Array.new(20){ |i| RandItem.new(i) }.each_slice(3) }
+        let(:items){ Array.new(20){ |i| RandItem.new(i) }.each_slice(3).to_a }
         let(:runner){ proc{ |a| a.map(&:value) } }
 
         it 'returns same result with threads' do
@@ -698,8 +709,8 @@ describe 'in_threads' do
       %w[include? member?].each do |method|
         describe "##{method}" do
           it 'returns same result' do
-            expect(enum.in_threads.send(method, enum[10])).
-              to eq(enum.send(method, enum[10]))
+            expect(enum.in_threads.send(method, items[10])).
+              to eq(enum.send(method, items[10]))
           end
         end
       end
