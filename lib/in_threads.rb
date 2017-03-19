@@ -139,15 +139,21 @@ class InThreads < SimpleDelegator
       methods = Array(options[:for])
       fail 'no methods provided using :for option' if methods.empty?
       ignore_undefined = options[:ignore_undefined]
-      enumerable_methods = Enumerable.instance_methods.map(&:to_s)
       methods.each do |method|
-        next if ignore_undefined && !enumerable_methods.include?(method)
+        next if ignore_undefined && !enumerable_method?(method)
         class_eval <<-RUBY
           def #{method}(*args, &block)
             #{runner}(:#{method}, *args, &block)
           end
         RUBY
       end
+    end
+
+  private
+
+    def enumerable_method?(name)
+      @enumerable_methods ||= Enumerable.instance_methods.map(&:to_sym)
+      @enumerable_methods.include?(name.to_sym)
     end
   end
 
@@ -186,6 +192,18 @@ class InThreads < SimpleDelegator
       self.class.new(enumerable.grep(*args), thread_count).map(&block)
     else
       enumerable.grep(*args)
+    end
+  end
+
+  if enumerable_method?(:grep_v)
+    # Special case method, works by applying `run_in_threads_consecutive` with
+    # map on enumerable returned by blockless run
+    def grep_v(*args, &block)
+      if block
+        self.class.new(enumerable.grep_v(*args), thread_count).map(&block)
+      else
+        enumerable.grep_v(*args)
+      end
     end
   end
 

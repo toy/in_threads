@@ -511,33 +511,40 @@ describe 'in_threads' do
       end
     end
 
-    describe '#grep' do
-      let(:matcher){ ValueItem::FastCheckMatcher }
+    %w[grep grep_v].each do |method|
+      describe_enum_method method do
+        let(:matcher){ ValueItem::FastCheckMatcher }
 
-      it 'fires same objects' do
-        enum.each do |o|
-          expect(o).to receive(:touch).exactly(o.fast_check? ? 1 : 0).times
+        it 'fires same objects' do
+          enum.each do |o|
+            if o.fast_check? == (method == 'grep')
+              expect(o).to receive(:touch)
+            else
+              expect(o).not_to receive(:touch)
+            end
+          end
+          enum.in_threads.send(method, matcher, &:touch_n_value)
         end
-        enum.in_threads.grep(matcher, &:touch_n_value)
-      end
 
-      it 'returns same with block' do
-        expect(enum.in_threads.grep(matcher, &:value)).
-          to eq(enum.grep(matcher, &:value))
-      end
+        it 'returns same with block' do
+          expect(enum.in_threads.send(method, matcher, &:value)).
+            to eq(enum.send(method, matcher, &:value))
+        end
 
-      it 'runs faster with threads', :retry => 3 do
-        expect(measure{ enum.in_threads.grep(matcher, &:value) }).
-          to be < measure{ enum.grep(matcher, &:value) } * speed_coef
-      end
+        it 'runs faster with threads', :retry => 3 do
+          expect(measure{ enum.in_threads.send(method, matcher, &:value) }).
+            to be < measure{ enum.send(method, matcher, &:value) } * speed_coef
+        end
 
-      it 'returns same without block' do
-        expect(enum.in_threads.grep(matcher)).to eq(enum.grep(matcher))
-      end
+        it 'returns same without block' do
+          expect(enum.in_threads.send(method, matcher)).
+            to eq(enum.send(method, matcher))
+        end
 
-      it 'raises exception in outer thread' do
-        check_test_exception(enum) do |threaded|
-          threaded.grep(matcher){ fail TestException }
+        it 'raises exception in outer thread' do
+          check_test_exception(enum) do |threaded|
+            threaded.send(method, matcher){ fail TestException }
+          end
         end
       end
     end
