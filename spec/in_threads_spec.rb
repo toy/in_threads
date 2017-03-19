@@ -409,8 +409,12 @@ describe 'in_threads' do
       end
     end
 
-    %w[collect map group_by max_by min_by minmax_by sort_by].each do |method|
-      describe "##{method}" do
+    %w[
+      collect map
+      group_by max_by min_by minmax_by sort_by
+      sum uniq
+    ].each do |method|
+      describe_enum_method method do
         it 'returns same result with threads' do
           expect(enum.in_threads.send(method, &:value)).
             to eq(enum.send(method, &:value))

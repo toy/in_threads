@@ -170,7 +170,7 @@ class InThreads < SimpleDelegator
     all? any? none? one?
     detect find find_index drop_while take_while
     partition find_all select reject count
-    collect map group_by max_by min_by minmax_by sort_by
+    collect map group_by max_by min_by minmax_by sort_by sum uniq
     flat_map collect_concat
   ], :ignore_undefined => true
 
@@ -182,7 +182,7 @@ class InThreads < SimpleDelegator
     first
     include? member?
     each_with_object
-    chunk slice_before slice_after slice_when
+    chunk chunk_while slice_before slice_after slice_when
   ].map(&:to_sym)
 
   # Special case method, works by applying `run_in_threads_consecutive` with
