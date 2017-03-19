@@ -734,7 +734,7 @@ describe 'in_threads' do
         end
       end
 
-      %w[chunk slice_before].each do |method|
+      %w[chunk slice_before slice_after].each do |method|
         describe_enum_method method do
           it 'returns same result' do
             expect(enum.in_threads.send(method, &:check?).to_a).
