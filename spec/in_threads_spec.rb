@@ -212,8 +212,9 @@ describe 'in_threads' do
         enum.each do |*args|
           expect(o).to receive(:notify).with(args)
         end
+        mutex = Mutex.new
         enum.in_threads.each do |*args|
-          o.notify(args)
+          mutex.synchronize{ o.notify(args) }
         end
       end
 
@@ -222,8 +223,9 @@ describe 'in_threads' do
         enum.each do |*args|
           expect(o).to receive(:notify).with(args)
         end
+        mutex = Mutex.new
         enum.in_threads.map do |*args|
-          o.notify(args)
+          mutex.synchronize{ o.notify(args) }
         end
       end
     end
