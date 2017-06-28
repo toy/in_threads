@@ -156,22 +156,22 @@ describe 'in_threads' do
 
       %w[each map all?].each do |method|
         it "runs in specified number of threads for #{method}" do
-          @thread_count = 0
-          @max_thread_count = 0
-          @mutex = Mutex.new
+          thread_count = 0
+          max_thread_count = 0
+          mutex = Mutex.new
           enum.in_threads(4).send(method) do |o|
-            @mutex.synchronize do
-              @thread_count += 1
-              @max_thread_count = [@max_thread_count, @thread_count].max
+            mutex.synchronize do
+              thread_count += 1
+              max_thread_count = [max_thread_count, thread_count].max
             end
             res = o.check?
-            @mutex.synchronize do
-              @thread_count -= 1
+            mutex.synchronize do
+              thread_count -= 1
             end
             res
           end
-          expect(@thread_count).to eq(0)
-          expect(@max_thread_count).to eq(4)
+          expect(thread_count).to eq(0)
+          expect(max_thread_count).to eq(4)
         end
       end
     end
@@ -313,14 +313,14 @@ describe 'in_threads' do
       end
 
       it 'fires same objects in reverse order' do
-        @order = double('order', :notify => nil)
-        expect(@order).to receive(:notify).with(items.last).ordered
-        expect(@order).to receive(:notify).with(items[items.length / 2]).ordered
-        expect(@order).to receive(:notify).with(items.first).ordered
+        order = double('order', :notify => nil)
+        expect(order).to receive(:notify).with(items.last).ordered
+        expect(order).to receive(:notify).with(items[items.length / 2]).ordered
+        expect(order).to receive(:notify).with(items.first).ordered
         enum.each{ |o| expect(o).to receive(:touch).once }
-        @mutex = Mutex.new
+        mutex = Mutex.new
         enum.in_threads.reverse_each do |o|
-          @mutex.synchronize{ @order.notify(o) }
+          mutex.synchronize{ order.notify(o) }
           o.touch_n_value
         end
       end
@@ -360,15 +360,15 @@ describe 'in_threads' do
             o.check?
           end
 
-          @a = []
-          @mutex = Mutex.new
+          a = []
+          mutex = Mutex.new
           enum.in_threads.send(method) do |o|
-            @mutex.synchronize{ @a << o }
+            mutex.synchronize{ a << o }
             o.check?
           end
 
-          expect(@a.length).to be >= a.length
-          expect(@a.length).to be <= items.length * 0.5
+          expect(a.length).to be >= a.length
+          expect(a.length).to be <= items.length * 0.5
         end
 
         it 'runs faster with threads', :retry => 3 do
@@ -585,13 +585,13 @@ describe 'in_threads' do
       end
 
       it 'executes block for each element' do
-        @o = double('order')
+        order = double('order')
         enum.each_entry do |*o|
-          expect(@o).to receive(:notify).with(o)
+          expect(order).to receive(:notify).with(o)
         end
-        @mutex = Mutex.new
+        mutex = Mutex.new
         enum.in_threads.each_entry do |*o|
-          @mutex.synchronize{ @o.notify(o) }
+          mutex.synchronize{ order.notify(o) }
           runner[]
         end
       end
