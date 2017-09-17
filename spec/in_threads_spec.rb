@@ -3,6 +3,8 @@ require 'rspec/retry'
 require 'in_threads'
 
 RSpec.configure do |config|
+  config.order = :random
+
   config.verbose_retry = true
 end
 
