@@ -152,8 +152,7 @@ class InThreads < SimpleDelegator
   private
 
     def enumerable_method?(name)
-      @enumerable_methods ||= Enumerable.instance_methods.map(&:to_sym)
-      @enumerable_methods.include?(name.to_sym)
+      Enumerable.method_defined?(name)
     end
   end
 
