@@ -1,5 +1,10 @@
-require 'spec_helper'
+require 'rspec'
+require 'rspec/retry'
 require 'in_threads'
+
+RSpec.configure do |config|
+  config.verbose_retry = true
+end
 
 # Test item with value
 class ValueItem
