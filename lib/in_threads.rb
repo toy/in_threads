@@ -41,16 +41,12 @@ class InThreads < SimpleDelegator
 
     # Without block behaves as `new`
     # With block yields it with `self` and ensures running of `finalize`
-    def self.limit(count, &block)
+    def self.limit(count)
       limiter = new(count)
-      if block
-        begin
-          yield limiter
-        ensure
-          limiter.finalize
-        end
-      else
-        limiter
+      begin
+        yield limiter
+      ensure
+        limiter.finalize
       end
     end
 
