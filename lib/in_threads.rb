@@ -139,7 +139,11 @@ class InThreads < SimpleDelegator
         next if ignore_undefined && !enumerable_method?(method)
         class_eval <<-RUBY
           def #{method}(*args, &block)
-            #{runner}(:#{method}, *args, &block)
+            if block
+              #{runner}(:#{method}, *args, &block)
+            else
+              enumerable.#{method}(*args)
+            end
           end
         RUBY
       end
@@ -211,44 +215,36 @@ protected
 
   # Use for methods which don't use block result
   def run_in_threads_return_original_enum(method, *args, &block)
-    if block
-      ThreadLimiter.limit(thread_count) do |limiter|
-        enumerable.send(method, *args) do |*block_args|
-          limiter << Thread.new{ block.call(*block_args) }
-        end
+    ThreadLimiter.limit(thread_count) do |limiter|
+      enumerable.send(method, *args) do |*block_args|
+        limiter << Thread.new{ block.call(*block_args) }
       end
-    else
-      enumerable.send(method, *args)
     end
   end
 
   # Use for methods which do use block result
   def run_in_threads_consecutive(method, *args, &block)
-    if block
-      enum_a, enum_b = Splitter.new(enumerable, 2).enums
-      results = Queue.new
-      runner = Thread.new do
-        Thread.current.priority = -1
-        ThreadLimiter.limit(thread_count) do |limiter|
-          enum_a.each do |*block_args|
-            break if Thread.current[:stop]
-            thread = Thread.new{ block.call(*block_args) }
-            results << thread
-            limiter << thread
-          end
+    enum_a, enum_b = Splitter.new(enumerable, 2).enums
+    results = Queue.new
+    runner = Thread.new do
+      Thread.current.priority = -1
+      ThreadLimiter.limit(thread_count) do |limiter|
+        enum_a.each do |*block_args|
+          break if Thread.current[:stop]
+          thread = Thread.new{ block.call(*block_args) }
+          results << thread
+          limiter << thread
         end
       end
+    end
 
-      begin
-        enum_b.send(method, *args) do
-          results.pop.value
-        end
-      ensure
-        runner[:stop] = true
-        runner.join
+    begin
+      enum_b.send(method, *args) do
+        results.pop.value
       end
-    else
-      enumerable.send(method, *args)
+    ensure
+      runner[:stop] = true
+      runner.join
     end
   end
 end
