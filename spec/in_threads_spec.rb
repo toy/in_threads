@@ -28,6 +28,8 @@ def describe_enum_method(method, &block)
 end
 
 class TestObject
+  SLEEP_TIME = 0.002
+
   def initialize(value)
     @value = value
   end
@@ -43,7 +45,7 @@ class TestObject
 private
 
   def wait
-    sleep 0.002
+    sleep SLEEP_TIME
   end
 end
 
@@ -93,7 +95,6 @@ describe InThreads do
 
   describe 'consistency' do
     let(:enum){ 100.times }
-    let(:sleep_time){ 0.002 }
 
     describe 'runs in specified number of threads' do
       let(:enum){ 40.times }
@@ -108,7 +109,7 @@ describe InThreads do
               thread_count += 1
               max_thread_count = [max_thread_count, thread_count].max
             end
-            sleep sleep_time
+            sleep TestObject::SLEEP_TIME
             mutex.synchronize do
               thread_count -= 1
             end
@@ -135,7 +136,7 @@ describe InThreads do
       %w[each map all?].each do |method|
         it "for ##{method}" do
           expect(enum).to receive(:each).once.and_call_original
-          enum.in_threads.send(method){ sleep sleep_time }
+          enum.in_threads.send(method){ sleep TestObject::SLEEP_TIME }
         end
       end
     end
