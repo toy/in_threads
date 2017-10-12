@@ -96,4 +96,4 @@ simply act as if `in_threads` wasn't used.
 
 ## Copyright
 
-Copyright (c) 2010-2017 Ivan Kuchin. See LICENSE.txt for details.
+Copyright (c) 2009-2017 Ivan Kuchin. See LICENSE.txt for details.
