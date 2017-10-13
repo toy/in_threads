@@ -48,7 +48,7 @@ private
 end
 
 describe InThreads do
-  let(:mutex){ Mutex.new }
+  let!(:mutex){ Mutex.new }
 
   describe 'initialization' do
     it 'complains about using with non enumerable' do
