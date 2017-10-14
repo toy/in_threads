@@ -52,6 +52,13 @@ end
 describe InThreads do
   let!(:mutex){ Mutex.new }
 
+  # Check if all threads are joined
+  let!(:threads_before){ Thread.list }
+  after do
+    threads = Thread.list - threads_before
+    expect(threads).to eq([]), 'expected all created threads to be joined'
+  end
+
   describe 'initialization' do
     it 'complains about using with non enumerable' do
       expect{ InThreads.new(1) }.to raise_error(ArgumentError)
