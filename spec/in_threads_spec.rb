@@ -13,7 +13,7 @@ RSpec.configure do |config|
 end
 
 def describe_enum_method(method, &block)
-  if Enumerable.method_defined?(method)
+  if Enumerable.method_defined?(method) || method.to_s == 'each'
     describe "##{method}", &block
   else
     describe "##{method}" do
@@ -21,7 +21,7 @@ def describe_enum_method(method, &block)
 
       it 'is not defined' do
         expect{ enum.in_threads.send(method) }.
-          to raise_error(NoMethodError){ |error| expect(error.name.to_s).to eq(method) }
+          to raise_error(NoMethodError){ |error| expect(error.name.to_s).to eq(method.to_s) }
       end
     end
   end
@@ -205,7 +205,7 @@ describe InThreads do
       let(:items){ Array.new(item_count){ |i| TestObject.new(value_proc[i]) } }
       let(:enum){ items }
 
-      describe '#each' do
+      describe_enum_method :each do
         it 'returns same enum after running' do
           expect(enum.in_threads.each(&:compute)).to eq(enum)
         end
@@ -262,7 +262,7 @@ describe InThreads do
         end
       end
 
-      describe '#reverse_each' do
+      describe_enum_method :reverse_each do
         let(:item_count){ 100 }
 
         it 'returns same result with threads' do
@@ -416,7 +416,7 @@ describe InThreads do
         end
       end
 
-      describe '#zip' do
+      describe_enum_method :zip do
         let(:block){ proc{ |a| a.each(&:compute) } }
 
         it 'yields same objects' do
@@ -443,7 +443,7 @@ describe InThreads do
         end
       end
 
-      describe '#cycle' do
+      describe_enum_method :cycle do
         it 'yields same objects' do
           yielded = []
           enum.in_threads.cycle(3) do |o|
@@ -500,7 +500,7 @@ describe InThreads do
         end
       end
 
-      describe_enum_method 'each_entry' do
+      describe_enum_method :each_entry do
         before do
           def enum.each
             (count / 3).times do
@@ -629,7 +629,7 @@ describe InThreads do
         end
       end
 
-      describe_enum_method 'each_with_object' do
+      describe_enum_method :each_with_object do
         let(:block){ proc{ |o, h| h[o] = true } }
 
         it 'returns same result' do
