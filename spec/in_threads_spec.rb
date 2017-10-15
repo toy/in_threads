@@ -92,6 +92,7 @@ describe InThreads do
   end
 
   describe 'consistency' do
+    let(:enum){ 100.times }
     let(:sleep_time){ 0.002 }
 
     describe 'runs in specified number of threads' do
@@ -124,8 +125,6 @@ describe InThreads do
       describe 'passes exception raised in block' do
         methods.each do |method|
           it "for ##{method}" do
-            enum = 10.times
-
             expect{ enum.in_threads.send(method){ fail 'expected' } }.to raise_error('expected')
           end
         end
@@ -135,8 +134,6 @@ describe InThreads do
     describe 'calls underlying enumerable #each only once' do
       %w[each map all?].each do |method|
         it "for ##{method}" do
-          enum = 100.times
-
           expect(enum).to receive(:each).once.and_call_original
           enum.in_threads.send(method){ sleep sleep_time }
         end
@@ -144,27 +141,32 @@ describe InThreads do
     end
 
     describe 'block arguments' do
-      %w[each map all? each_entry].each do |method|
-        it "passes arguments for #{method} as for not threaded call" do
-          enum = []
-          def enum.each
-            yield
-            yield 1
-            yield 2, 3
-            yield 4, 5, 6
-          end
+      %w[each map all? each_entry each_with_index].each do |method|
+        describe_enum_method method do
+          it 'passes arguments as for not threaded call' do
+            enum = Class.new do
+              include Enumerable
 
-          expected = []
-          enum.each do |*args|
-            expected << args
-          end
+              def each
+                yield
+                yield 1
+                yield 2, 3
+                yield 4, 5, 6
+              end
+            end.new
 
-          yielded = []
-          enum.in_threads.each do |*args|
-            mutex.synchronize{ yielded << args }
-          end
+            expected = []
+            enum.send(method) do |a, b, c|
+              expected << [a, b, c]
+            end
 
-          expect(yielded).to match_array(expected)
+            yielded = []
+            enum.in_threads.send(method) do |a, b, c|
+              mutex.synchronize{ yielded << [a, b, c] }
+            end
+
+            expect(yielded).to match_array(expected)
+          end
         end
       end
     end
