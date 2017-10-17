@@ -7,8 +7,8 @@ RSpec.configure do |config|
 
   config.verbose_retry = true
 
-  config.around :each, :retry do |ex|
-    ex.run_with_retry :retry => 5
+  config.around :each, :flaky do |ex|
+    ex.run_with_retry :retry => 3
   end
 end
 
@@ -100,7 +100,7 @@ describe InThreads do
       let(:threads){ 4 }
 
       %w[each map all?].each do |method|
-        it "for ##{method}", :retry do
+        it "for ##{method}", :flaky do
           thread_count = 0
           max_thread_count = 0
           enum.in_threads(threads).send(method) do
@@ -218,12 +218,12 @@ describe InThreads do
           expect(yielded).to match_array(items)
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.each(&:compute) }.
             to be_faster_than{ enum.each(&:compute) }
         end
 
-        it 'runs faster with more threads', :retry do
+        it 'runs faster with more threads', :flaky do
           expect{ enum.in_threads(10).each(&:compute) }.
             to be_faster_than{ enum.in_threads(2).each(&:compute) }
         end
@@ -250,7 +250,7 @@ describe InThreads do
             expect(yielded).to match_array(enum.send(method))
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, &block) }.
               to be_faster_than{ enum.send(method, &block) }
           end
@@ -283,7 +283,7 @@ describe InThreads do
             to be > yielded.index(items[-items.length / 4])
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.reverse_each(&:compute) }.
             to be_faster_than{ enum.reverse_each(&:compute) }
         end
@@ -328,7 +328,7 @@ describe InThreads do
               proc{ %w[all? drop_while take_while].include?(method) }
             end
 
-            it 'runs faster with threads', :retry do
+            it 'runs faster with threads', :flaky do
               expect{ enum.in_threads.send(method, &:compute) }.
                 to be_faster_than{ enum.send(method, &:compute) }
             end
@@ -353,7 +353,7 @@ describe InThreads do
             expect(yielded).to match_array(items)
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, &:compute) }.
               to be_faster_than{ enum.send(method, &:compute) }
           end
@@ -380,7 +380,7 @@ describe InThreads do
             expect(yielded).to match_array(items)
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, &:compute) }.
               to be_faster_than{ enum.send(method, &:compute) }
           end
@@ -404,7 +404,7 @@ describe InThreads do
               to eq(enum.send(method, 3, &block))
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, 3, &block) }.
               to be_faster_than{ enum.send(method, 3, &block) }
           end
@@ -432,7 +432,7 @@ describe InThreads do
             to eq(enum.zip(enum, enum, &block))
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.zip(enum, enum, &block) }.
             to be_faster_than{ enum.zip(enum, enum, &block) }
         end
@@ -452,7 +452,7 @@ describe InThreads do
           expect(yielded).to match_array(enum.cycle(3))
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.cycle(3, &:compute) }.
             to be_faster_than{ enum.cycle(3, &:compute) }
         end
@@ -488,7 +488,7 @@ describe InThreads do
               to eq(enum.send(method, matcher, &:compute))
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, matcher, &:compute) }.
               to be_faster_than{ enum.send(method, matcher, &:compute) }
           end
@@ -531,7 +531,7 @@ describe InThreads do
           expect(yielded).to match_array(expected)
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.each_entry(&block) }.
             to be_faster_than{ enum.each_entry(&block) }
         end
@@ -560,7 +560,7 @@ describe InThreads do
             expect(yielded).to match_array(items)
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, &block) }.
               to be_faster_than{ enum.send(method, &block) }
           end
