@@ -182,6 +182,7 @@ class InThreads < SimpleDelegator
     include? member?
     each_with_object
     chunk chunk_while slice_before slice_after slice_when
+    lazy
   ].map(&:to_sym)
 
   # Special case method, works by applying `run_in_threads_consecutive` with

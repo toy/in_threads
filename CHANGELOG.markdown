@@ -2,6 +2,8 @@
 
 ## unreleased
 
+* Register `lazy` to run without threads [@toy](https://github.com/toy)
+
 ## v1.4.0 (2017-03-19)
 
 * Register `sum` and `uniq` to run in threads and `chunk_while` to run without threads [@toy](https://github.com/toy)

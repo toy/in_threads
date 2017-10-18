@@ -191,12 +191,12 @@ describe InThreads do
       supports_block_expectations
     end
 
-    (
-      Enumerable.instance_methods.map(&:to_sym) -
-      InThreads.instance_methods.map(&:to_sym) -
-      InThreads::INCOMPATIBLE_METHODS
-    ).each do |method|
-      pending "##{method}"
+    it 'lists all incompatible methods' do
+      expect(InThreads::INCOMPATIBLE_METHODS.sort_by(&:to_s)).
+        to include(*(
+          Enumerable.instance_methods.map(&:to_sym) -
+          InThreads.public_instance_methods(false).map(&:to_sym)
+        ).sort_by(&:to_s))
     end
 
     context 'threaded' do
