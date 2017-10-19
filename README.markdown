@@ -94,6 +94,14 @@ You can call any `Enumerable` method, but some (`#inject`, `#reduce`, `#max`,
 `#min`, `#sort`, `#to_a`, and others) cannot run concurrently, and so will
 simply act as if `in_threads` wasn't used.
 
+### Break and exceptions
+
+Exceptions are caught and re-thrown after allowing blocks that are still running to finish.
+
+**IMPORTANT**: only the first encountered exception is propagated, so it is recommended to handle exceptions in the block.
+
+`break` is handled in ruby >= 1.9 and should be handled in jruby [after 9.1.9.0](https://github.com/jruby/jruby/issues/4697). Handling is done in special way: as blocks are run outside of original context, calls to `break` cause `LocalJumpError` which is caught and its result is returned.
+
 ## Copyright
 
 Copyright (c) 2009-2017 Ivan Kuchin. See LICENSE.txt for details.

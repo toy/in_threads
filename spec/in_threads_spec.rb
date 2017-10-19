@@ -15,7 +15,7 @@ end
 # check if break causes LocalJumpError
 # not in jruby in mri < 1.9
 # https://github.com/jruby/jruby/issues/4697
-def skip_if_break_in_thread_is_ignored
+SKIP_IF_BREAK_IN_THREAD_IS_IGNORED = begin
   Thread.new{ break }.join
   'can not handle break in thread'
 rescue LocalJumpError
@@ -152,7 +152,7 @@ describe InThreads do
             expect{ enum.in_threads.send(method){} }.to raise_error('expected')
           end
 
-          it 'handles break', :skip => skip_if_break_in_thread_is_ignored do
+          it 'handles break', :skip => SKIP_IF_BREAK_IN_THREAD_IS_IGNORED do
             expect(enum).not_to receive(:unexpected)
             def enum.each(&block)
               20.times(&block)
