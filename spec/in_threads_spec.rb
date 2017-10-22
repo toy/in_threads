@@ -12,6 +12,16 @@ RSpec.configure do |config|
   end
 end
 
+# check if break causes LocalJumpError
+# not in jruby in mri < 1.9
+# https://github.com/jruby/jruby/issues/4697
+def skip_if_break_in_thread_is_ignored
+  Thread.new{ break }.join
+  'can not handle break in thread'
+rescue LocalJumpError
+  false
+end
+
 def describe_enum_method(method, &block)
   if Enumerable.method_defined?(method) || method.to_s == 'each'
     describe "##{method}", &block
@@ -127,16 +137,139 @@ describe InThreads do
       end
     end
 
-    describe 'exception' do
-      methods = %w[each map all? sort]
-
-      describe 'passes exception raised in block' do
-        methods.each do |method|
-          it "for ##{method}" do
+    describe 'exception/break handling' do
+      %w[each map all?].each do |method|
+        describe "for ##{method}" do
+          it 'passes exception raised in block' do
             expect{ enum.in_threads.send(method){ fail 'expected' } }.to raise_error('expected')
+          end
+
+          it 'passes exception raised during iteration' do
+            def enum.each
+              fail 'expected'
+            end
+
+            expect{ enum.in_threads.send(method){} }.to raise_error('expected')
+          end
+
+          it 'handles break', :skip => skip_if_break_in_thread_is_ignored do
+            expect(enum).not_to receive(:unexpected)
+            def enum.each(&block)
+              20.times(&block)
+              unexpected
+            end
+
+            value = double
+            expect(enum.in_threads(10).send(method) do
+              break value
+            end).to eq(value)
+          end
+
+          it 'stops iterating after exception' do
+            expect(enum).not_to receive(:unexpected)
+            def enum.each(&block)
+              20.times(&block)
+              unexpected
+            end
+
+            expect do
+              enum.in_threads(10).send(method) do |i|
+                fail 'expected' if i == 5
+                sleep TestObject::SLEEP_TIME
+              end
+            end.to raise_error('expected')
+          end
+
+          it 'finishes blocks started before exception' do
+            started = []
+            finished = []
+
+            expect do
+              enum.in_threads(10).send(method) do |i|
+                fail 'expected' if i == 5
+                mutex.synchronize{ started << i }
+                sleep TestObject::SLEEP_TIME
+                mutex.synchronize{ finished << i }
+              end
+            end.to raise_error('expected')
+
+            expect(finished).to match_array(started)
+          end
+
+          context 'exception order' do
+            before do
+              stub_const('Order', Queue.new)
+            end
+
+            it 'passes exception raised during iteration if it happens earlier than in block' do
+              def enum.each(&block)
+                5.times(&block)
+                begin
+                  fail 'expected'
+                ensure
+                  Order.push nil
+                end
+              end
+
+              expect do
+                enum.in_threads(10).send(method) do
+                  Thread.pass while Order.empty?
+                  sleep TestObject::SLEEP_TIME
+                  fail 'unexpected'
+                end
+              end.to raise_error('expected')
+            end
+
+            it 'passes exception raised in block if it happens earlier than during iteration' do
+              def enum.each(&block)
+                5.times(&block)
+                Thread.pass while Order.empty?
+                sleep TestObject::SLEEP_TIME
+                fail 'unexpected'
+              end
+
+              expect do
+                enum.in_threads(10).send(method) do
+                  begin
+                    fail 'expected'
+                  ensure
+                    Order.push nil
+                  end
+                end
+              end.to raise_error('expected')
+            end
+
+            it 'passes first exception raised in block' do
+              expect do
+                enum.in_threads(10).send(method) do |i|
+                  if i == 5
+                    begin
+                      fail 'expected'
+                    ensure
+                      Order.push nil
+                    end
+                  else
+                    Thread.pass while Order.empty?
+                    sleep TestObject::SLEEP_TIME
+                    fail 'unexpected'
+                  end
+                end
+              end.to raise_error('expected')
+            end
           end
         end
       end
+    end
+
+    it 'does not yield all elements when not needed' do
+      expect(enum).not_to receive(:unexpected)
+
+      def enum.each(&block)
+        100.times(&block)
+        unexpected
+      end
+
+      enum.in_threads(10).all?{ false }
     end
 
     describe 'calls underlying enumerable #each only once' do
