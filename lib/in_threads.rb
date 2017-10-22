@@ -126,7 +126,7 @@ class InThreads < SimpleDelegator
   class << self
     # Specify runner to use
     #
-    #   use :run_in_threads_consecutive, :for => %w[all? any? none? one?]
+    #   use :run_in_threads_use_block_result, :for => %w[all? any? none? one?]
     #
     # `:for` is required
     # `:ignore_undefined` ignores methods which are not present in
@@ -156,8 +156,8 @@ class InThreads < SimpleDelegator
     end
   end
 
-  use :run_in_threads_return_original_enum, :for => %w[each]
-  use :run_in_threads_return_original_enum, :for => %w[
+  use :run_in_threads_ignore_block_result, :for => %w[each]
+  use :run_in_threads_ignore_block_result, :for => %w[
     reverse_each
     each_with_index enum_with_index
     each_cons each_slice enum_cons enum_slice
@@ -165,7 +165,7 @@ class InThreads < SimpleDelegator
     cycle
     each_entry
   ], :ignore_undefined => true
-  use :run_in_threads_consecutive, :for => %w[
+  use :run_in_threads_use_block_result, :for => %w[
     all? any? none? one?
     detect find find_index drop_while take_while
     partition find_all select reject count
@@ -185,7 +185,7 @@ class InThreads < SimpleDelegator
     lazy
   ].map(&:to_sym)
 
-  # Special case method, works by applying `run_in_threads_consecutive` with
+  # Special case method, works by applying `run_in_threads_use_block_result` with
   # map on enumerable returned by blockless run
   def grep(*args, &block)
     if block
@@ -196,7 +196,7 @@ class InThreads < SimpleDelegator
   end
 
   if enumerable_method?(:grep_v)
-    # Special case method, works by applying `run_in_threads_consecutive` with
+    # Special case method, works by applying `run_in_threads_use_block_result` with
     # map on enumerable returned by blockless run
     def grep_v(*args, &block)
       if block
@@ -215,7 +215,7 @@ class InThreads < SimpleDelegator
 protected
 
   # Use for methods which don't use block result
-  def run_in_threads_return_original_enum(method, *args, &block)
+  def run_in_threads_ignore_block_result(method, *args, &block)
     ThreadLimiter.limit(thread_count) do |limiter|
       enumerable.send(method, *args) do |*block_args|
         limiter << Thread.new{ block.call(*block_args) }
@@ -224,7 +224,7 @@ protected
   end
 
   # Use for methods which do use block result
-  def run_in_threads_consecutive(method, *args, &block)
+  def run_in_threads_use_block_result(method, *args, &block)
     enum_a, enum_b = Splitter.new(enumerable, 2).enums
     results = Queue.new
     runner = Thread.new do
