@@ -48,9 +48,6 @@ Performance/RedundantBlockCall:
 Style/DoubleNegation:
   Enabled: false
 
-Style/Encoding:
-  EnforcedStyle: when_needed
-
 Style/HashSyntax:
   EnforcedStyle: hash_rockets
 
