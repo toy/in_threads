@@ -65,7 +65,9 @@ describe InThreads do
   # Check if all threads are joined
   let!(:threads_before){ Thread.list }
   after do
-    threads = Thread.list - threads_before
+    threads = (Thread.list - threads_before).reject do |thread|
+      thread.respond_to?(:backtrace) && thread.backtrace.none?{ |l| l =~ /in_threads/ }
+    end
     expect(threads).to eq([]), 'expected all created threads to be joined'
   end
 
