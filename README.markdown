@@ -6,7 +6,7 @@
 
 # in_threads
 
-Easily execute Ruby code in parallel.
+Run all possible enumerable methods in concurrent/parallel threads.
 
 ```ruby
 urls.in_threads(20).map do |url|
@@ -28,7 +28,7 @@ gem 'in_threads'
 $ bundle install
 ```
 
-Or, if you don't use Bundler, install it globally:
+Or install globally:
 
 ```sh
 $ gem install in_threads
