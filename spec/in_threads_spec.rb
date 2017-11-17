@@ -7,9 +7,19 @@ RSpec.configure do |config|
 
   config.verbose_retry = true
 
-  config.around :each, :retry do |ex|
-    ex.run_with_retry :retry => 5
+  config.around :each, :flaky do |ex|
+    ex.run_with_retry :retry => 3
   end
+end
+
+# check if break causes LocalJumpError
+# not in jruby in mri < 1.9
+# https://github.com/jruby/jruby/issues/4697
+SKIP_IF_BREAK_IN_THREAD_IS_IGNORED = begin
+  Thread.new{ break }.join
+  'can not handle break in thread'
+rescue LocalJumpError
+  false
 end
 
 def describe_enum_method(method, &block)
@@ -28,6 +38,8 @@ def describe_enum_method(method, &block)
 end
 
 class TestObject
+  SLEEP_TIME = 0.002
+
   def initialize(value)
     @value = value
   end
@@ -43,12 +55,21 @@ class TestObject
 private
 
   def wait
-    sleep 0.002
+    sleep SLEEP_TIME
   end
 end
 
 describe InThreads do
   let!(:mutex){ Mutex.new }
+
+  # Check if all threads are joined
+  let!(:threads_before){ Thread.list }
+  after do
+    threads = (Thread.list - threads_before).reject do |thread|
+      thread.respond_to?(:backtrace) && thread.backtrace.none?{ |l| l =~ /in_threads/ }
+    end
+    expect(threads).to eq([]), 'expected all created threads to be joined'
+  end
 
   describe 'initialization' do
     it 'complains about using with non enumerable' do
@@ -93,14 +114,13 @@ describe InThreads do
 
   describe 'consistency' do
     let(:enum){ 100.times }
-    let(:sleep_time){ 0.002 }
 
     describe 'runs in specified number of threads' do
       let(:enum){ 40.times }
       let(:threads){ 4 }
 
       %w[each map all?].each do |method|
-        it "for ##{method}", :retry do
+        it "for ##{method}", :flaky do
           thread_count = 0
           max_thread_count = 0
           enum.in_threads(threads).send(method) do
@@ -108,7 +128,7 @@ describe InThreads do
               thread_count += 1
               max_thread_count = [max_thread_count, thread_count].max
             end
-            sleep sleep_time
+            sleep TestObject::SLEEP_TIME
             mutex.synchronize do
               thread_count -= 1
             end
@@ -119,23 +139,146 @@ describe InThreads do
       end
     end
 
-    describe 'exception' do
-      methods = %w[each map all? sort]
-
-      describe 'passes exception raised in block' do
-        methods.each do |method|
-          it "for ##{method}" do
+    describe 'exception/break handling' do
+      %w[each map all?].each do |method|
+        describe "for ##{method}" do
+          it 'passes exception raised in block' do
             expect{ enum.in_threads.send(method){ fail 'expected' } }.to raise_error('expected')
+          end
+
+          it 'passes exception raised during iteration' do
+            def enum.each
+              fail 'expected'
+            end
+
+            expect{ enum.in_threads.send(method){} }.to raise_error('expected')
+          end
+
+          it 'handles break', :skip => SKIP_IF_BREAK_IN_THREAD_IS_IGNORED do
+            expect(enum).not_to receive(:unexpected)
+            def enum.each(&block)
+              20.times(&block)
+              unexpected
+            end
+
+            value = double
+            expect(enum.in_threads(10).send(method) do
+              break value
+            end).to eq(value)
+          end
+
+          it 'stops iterating after exception' do
+            expect(enum).not_to receive(:unexpected)
+            def enum.each(&block)
+              20.times(&block)
+              unexpected
+            end
+
+            expect do
+              enum.in_threads(10).send(method) do |i|
+                fail 'expected' if i == 5
+                sleep TestObject::SLEEP_TIME
+              end
+            end.to raise_error('expected')
+          end
+
+          it 'finishes blocks started before exception' do
+            started = []
+            finished = []
+
+            expect do
+              enum.in_threads(10).send(method) do |i|
+                fail 'expected' if i == 5
+                mutex.synchronize{ started << i }
+                sleep TestObject::SLEEP_TIME
+                mutex.synchronize{ finished << i }
+              end
+            end.to raise_error('expected')
+
+            expect(finished).to match_array(started)
+          end
+
+          context 'exception order' do
+            before do
+              stub_const('Order', Queue.new)
+            end
+
+            it 'passes exception raised during iteration if it happens earlier than in block' do
+              def enum.each(&block)
+                5.times(&block)
+                begin
+                  fail 'expected'
+                ensure
+                  Order.push nil
+                end
+              end
+
+              expect do
+                enum.in_threads(10).send(method) do
+                  Thread.pass while Order.empty?
+                  sleep TestObject::SLEEP_TIME
+                  fail 'unexpected'
+                end
+              end.to raise_error('expected')
+            end
+
+            it 'passes exception raised in block if it happens earlier than during iteration' do
+              def enum.each(&block)
+                5.times(&block)
+                Thread.pass while Order.empty?
+                sleep TestObject::SLEEP_TIME
+                fail 'unexpected'
+              end
+
+              expect do
+                enum.in_threads(10).send(method) do
+                  begin
+                    fail 'expected'
+                  ensure
+                    Order.push nil
+                  end
+                end
+              end.to raise_error('expected')
+            end
+
+            it 'passes first exception raised in block' do
+              expect do
+                enum.in_threads(10).send(method) do |i|
+                  if i == 5
+                    begin
+                      fail 'expected'
+                    ensure
+                      Order.push nil
+                    end
+                  else
+                    Thread.pass while Order.empty?
+                    sleep TestObject::SLEEP_TIME
+                    fail 'unexpected'
+                  end
+                end
+              end.to raise_error('expected')
+            end
           end
         end
       end
+    end
+
+    it 'does not yield all elements when not needed' do
+      expect(enum).not_to receive(:unexpected)
+
+      def enum.each(&block)
+        100.times(&block)
+        unexpected
+      end
+
+      enum.in_threads(10).all?{ false }
     end
 
     describe 'calls underlying enumerable #each only once' do
       %w[each map all?].each do |method|
         it "for ##{method}" do
           expect(enum).to receive(:each).once.and_call_original
-          enum.in_threads.send(method){ sleep sleep_time }
+          enum.in_threads.send(method){ sleep TestObject::SLEEP_TIME }
         end
       end
     end
@@ -191,12 +334,12 @@ describe InThreads do
       supports_block_expectations
     end
 
-    (
-      Enumerable.instance_methods.map(&:to_sym) -
-      InThreads.instance_methods.map(&:to_sym) -
-      InThreads::INCOMPATIBLE_METHODS
-    ).each do |method|
-      pending "##{method}"
+    it 'lists all incompatible methods' do
+      expect(InThreads::INCOMPATIBLE_METHODS.sort_by(&:to_s)).
+        to include(*(
+          Enumerable.instance_methods.map(&:to_sym) -
+          InThreads.public_instance_methods(false).map(&:to_sym)
+        ).sort_by(&:to_s))
     end
 
     context 'threaded' do
@@ -218,12 +361,12 @@ describe InThreads do
           expect(yielded).to match_array(items)
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.each(&:compute) }.
             to be_faster_than{ enum.each(&:compute) }
         end
 
-        it 'runs faster with more threads', :retry do
+        it 'runs faster with more threads', :flaky do
           expect{ enum.in_threads(10).each(&:compute) }.
             to be_faster_than{ enum.in_threads(2).each(&:compute) }
         end
@@ -250,7 +393,7 @@ describe InThreads do
             expect(yielded).to match_array(enum.send(method))
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, &block) }.
               to be_faster_than{ enum.send(method, &block) }
           end
@@ -283,7 +426,7 @@ describe InThreads do
             to be > yielded.index(items[-items.length / 4])
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.reverse_each(&:compute) }.
             to be_faster_than{ enum.reverse_each(&:compute) }
         end
@@ -328,7 +471,7 @@ describe InThreads do
               proc{ %w[all? drop_while take_while].include?(method) }
             end
 
-            it 'runs faster with threads', :retry do
+            it 'runs faster with threads', :flaky do
               expect{ enum.in_threads.send(method, &:compute) }.
                 to be_faster_than{ enum.send(method, &:compute) }
             end
@@ -353,7 +496,7 @@ describe InThreads do
             expect(yielded).to match_array(items)
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, &:compute) }.
               to be_faster_than{ enum.send(method, &:compute) }
           end
@@ -380,7 +523,7 @@ describe InThreads do
             expect(yielded).to match_array(items)
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, &:compute) }.
               to be_faster_than{ enum.send(method, &:compute) }
           end
@@ -404,7 +547,7 @@ describe InThreads do
               to eq(enum.send(method, 3, &block))
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, 3, &block) }.
               to be_faster_than{ enum.send(method, 3, &block) }
           end
@@ -432,7 +575,7 @@ describe InThreads do
             to eq(enum.zip(enum, enum, &block))
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.zip(enum, enum, &block) }.
             to be_faster_than{ enum.zip(enum, enum, &block) }
         end
@@ -452,7 +595,7 @@ describe InThreads do
           expect(yielded).to match_array(enum.cycle(3))
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.cycle(3, &:compute) }.
             to be_faster_than{ enum.cycle(3, &:compute) }
         end
@@ -488,7 +631,7 @@ describe InThreads do
               to eq(enum.send(method, matcher, &:compute))
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, matcher, &:compute) }.
               to be_faster_than{ enum.send(method, matcher, &:compute) }
           end
@@ -531,7 +674,7 @@ describe InThreads do
           expect(yielded).to match_array(expected)
         end
 
-        it 'runs faster with threads', :retry do
+        it 'runs faster with threads', :flaky do
           expect{ enum.in_threads.each_entry(&block) }.
             to be_faster_than{ enum.each_entry(&block) }
         end
@@ -560,7 +703,7 @@ describe InThreads do
             expect(yielded).to match_array(items)
           end
 
-          it 'runs faster with threads', :retry do
+          it 'runs faster with threads', :flaky do
             expect{ enum.in_threads.send(method, &block) }.
               to be_faster_than{ enum.send(method, &block) }
           end

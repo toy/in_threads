@@ -1,5 +1,4 @@
 require 'thread'
-require 'thwait'
 require 'delegate'
 
 Enumerable.class_eval do
@@ -31,80 +30,6 @@ end
 class InThreads < SimpleDelegator
   protected :__getobj__, :__setobj__
 
-  # Use ThreadsWait to limit number of threads
-  class ThreadLimiter
-    # Initialize with limit
-    def initialize(count)
-      @count = count
-      @waiter = ThreadsWait.new
-    end
-
-    # Without block behaves as `new`
-    # With block yields it with `self` and ensures running of `finalize`
-    def self.limit(count)
-      limiter = new(count)
-      begin
-        yield limiter
-      ensure
-        limiter.finalize
-      end
-    end
-
-    # Add thread to `ThreadsWait`, wait for finishing of one thread if limit
-    # reached
-    def <<(thread)
-      @waiter.join_nowait(thread)
-      @waiter.next_wait.join unless @waiter.threads.length < @count
-    end
-
-    # Wait for waiting threads
-    def finalize
-      @waiter.all_waits(&:join)
-    end
-  end
-
-  # Yield objects of one enum in multiple places
-  class Splitter
-    # Enumerable using Queue
-    class Transfer
-      include Enumerable
-
-      def initialize
-        @queue = Queue.new
-      end
-
-      def <<(args)
-        @queue << args
-      end
-
-      def finish
-        @queue << nil
-      end
-
-      def each(&block)
-        while (args = @queue.pop)
-          block.call(*args)
-        end
-        nil # non reusable
-      end
-    end
-
-    # Enums receiving items
-    attr_reader :enums
-
-    def initialize(enumerable, enum_count)
-      @enums = Array.new(enum_count){ Transfer.new }
-      @filler = Thread.new do
-        enumerable.each do |*args|
-          @enums.each do |enum|
-            enum << args
-          end
-        end
-        @enums.each(&:finish)
-      end
-    end
-  end
-
   attr_reader :enumerable, :thread_count
   def initialize(enumerable, thread_count = 10, &block)
     super(enumerable)
@@ -126,7 +51,7 @@ class InThreads < SimpleDelegator
   class << self
     # Specify runner to use
     #
-    #   use :run_in_threads_consecutive, :for => %w[all? any? none? one?]
+    #   use :run_in_threads_use_block_result, :for => %w[all? any? none? one?]
     #
     # `:for` is required
     # `:ignore_undefined` ignores methods which are not present in
@@ -156,8 +81,8 @@ class InThreads < SimpleDelegator
     end
   end
 
-  use :run_in_threads_return_original_enum, :for => %w[each]
-  use :run_in_threads_return_original_enum, :for => %w[
+  use :run_in_threads_ignore_block_result, :for => %w[each]
+  use :run_in_threads_ignore_block_result, :for => %w[
     reverse_each
     each_with_index enum_with_index
     each_cons each_slice enum_cons enum_slice
@@ -165,7 +90,7 @@ class InThreads < SimpleDelegator
     cycle
     each_entry
   ], :ignore_undefined => true
-  use :run_in_threads_consecutive, :for => %w[
+  use :run_in_threads_use_block_result, :for => %w[
     all? any? none? one?
     detect find find_index drop_while take_while
     partition find_all select reject count
@@ -182,9 +107,10 @@ class InThreads < SimpleDelegator
     include? member?
     each_with_object
     chunk chunk_while slice_before slice_after slice_when
+    lazy
   ].map(&:to_sym)
 
-  # Special case method, works by applying `run_in_threads_consecutive` with
+  # Special case method, works by applying `run_in_threads_use_block_result` with
   # map on enumerable returned by blockless run
   def grep(*args, &block)
     if block
@@ -195,7 +121,7 @@ class InThreads < SimpleDelegator
   end
 
   if enumerable_method?(:grep_v)
-    # Special case method, works by applying `run_in_threads_consecutive` with
+    # Special case method, works by applying `run_in_threads_use_block_result` with
     # map on enumerable returned by blockless run
     def grep_v(*args, &block)
       if block
@@ -213,38 +139,159 @@ class InThreads < SimpleDelegator
 
 protected
 
+  # Enum out of queue
+  class QueueEnum
+    include Enumerable
+
+    def initialize(size = nil)
+      @queue = size ? SizedQueue.new(size) : Queue.new
+    end
+
+    def each(&block)
+      while (args = @queue.pop)
+        block.call(*args)
+      end
+      nil # non reusable
+    end
+
+    def push(*args)
+      @queue.push(args) unless @closed
+    end
+
+    def close(clear = false)
+      @closed = true
+      @queue.clear if clear
+      @queue.push(nil)
+    end
+  end
+
+  # Thread pool
+  class Pool
+    attr_reader :exception
+
+    def initialize(thread_count)
+      @queue = Queue.new
+      @mutex = Mutex.new
+      @pool = Array.new(thread_count) do
+        Thread.new do
+          while (block = @queue.pop)
+            block.call
+            break if stop?
+          end
+        end
+      end
+    end
+
+    def run(&block)
+      @queue.push(block)
+    end
+
+    def stop?
+      @stop || @exception
+    end
+
+    def stop!
+      @stop = true
+    end
+
+    def finalize
+      @pool.
+        each{ @queue.push(nil) }.
+        each(&:join)
+    end
+
+    def catch
+      yield
+    rescue Exception => e
+      @mutex.synchronize{ @exception ||= e } unless @exception
+      nil
+    end
+  end
+
   # Use for methods which don't use block result
-  def run_in_threads_return_original_enum(method, *args, &block)
-    ThreadLimiter.limit(thread_count) do |limiter|
-      enumerable.send(method, *args) do |*block_args|
-        limiter << Thread.new{ block.call(*block_args) }
+  def run_in_threads_ignore_block_result(method, *args, &block)
+    pool = Pool.new(thread_count)
+    wait = SizedQueue.new(thread_count - 1)
+    begin
+      pool.catch do
+        enumerable.send(method, *args) do |*block_args|
+          pool.run do
+            pool.catch do
+              block.call(*block_args)
+            end
+            wait.pop
+          end
+          wait.push(nil)
+          break if pool.stop?
+        end
+      end
+    ensure
+      pool.finalize
+      if (e = pool.exception)
+        return e.exit_value if e.is_a?(LocalJumpError) && e.reason == :break
+        fail e
       end
     end
   end
 
   # Use for methods which do use block result
-  def run_in_threads_consecutive(method, *args, &block)
-    enum_a, enum_b = Splitter.new(enumerable, 2).enums
-    results = Queue.new
-    runner = Thread.new do
-      Thread.current.priority = -1
-      ThreadLimiter.limit(thread_count) do |limiter|
-        enum_a.each do |*block_args|
-          break if Thread.current[:stop]
-          thread = Thread.new{ block.call(*block_args) }
-          results << thread
-          limiter << thread
-        end
-      end
-    end
+  def run_in_threads_use_block_result(method, *args, &block)
+    pool = Pool.new(thread_count)
+    enum_a = QueueEnum.new
+    enum_b = QueueEnum.new(thread_count - 1)
+    results = SizedQueue.new(thread_count - 1)
+    filler = filler_thread(pool, [enum_a, enum_b])
+    runner = runner_thread(pool, enum_a, results, &block)
 
     begin
-      enum_b.send(method, *args) do
-        results.pop.value
+      pool.catch do
+        enum_b.send(method, *args) do
+          result = results.pop.pop
+          break if pool.stop?
+          result
+        end
       end
     ensure
-      runner[:stop] = true
+      pool.stop!
+      enum_a.close(true)
+      enum_b.close(true)
+      results.clear
+      pool.finalize
       runner.join
+      filler.join
+      if (e = pool.exception)
+        return e.exit_value if e.is_a?(LocalJumpError) && e.reason == :break
+        fail e
+      end
+    end
+  end
+
+private
+
+  def filler_thread(pool, enums)
+    Thread.new do
+      pool.catch do
+        enumerable.each do |*block_args|
+          enums.each do |enum|
+            enum.push(*block_args)
+          end
+          break if pool.stop?
+        end
+      end
+      enums.each(&:close)
+    end
+  end
+
+  def runner_thread(pool, enum, results, &block)
+    Thread.new do
+      enum.each do |*block_args|
+        queue = Queue.new
+        pool.run do
+          queue.push(pool.catch{ block.call(*block_args) })
+        end
+        results.push(queue)
+        break if pool.stop?
+      end
     end
   end
 end
