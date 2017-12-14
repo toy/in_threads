@@ -62,7 +62,7 @@ class InThreads < SimpleDelegator
       ignore_undefined = options[:ignore_undefined]
       methods.each do |method|
         next if ignore_undefined && !enumerable_method?(method)
-        class_eval <<-RUBY
+        class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{method}(*args, &block)
             if block
               #{runner}(:#{method}, *args, &block)
