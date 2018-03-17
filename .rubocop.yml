@@ -11,6 +11,9 @@ Layout/CaseIndentation:
 Layout/DotPosition:
   EnforcedStyle: trailing
 
+Layout/EndAlignment:
+  EnforcedStyleAlignWith: variable
+
 Layout/IndentHash:
   EnforcedStyle: consistent
 
@@ -23,9 +26,6 @@ Layout/SpaceInsideHashLiteralBraces:
 
 Lint/AmbiguousBlockAssociation:
   Enabled: false
-
-Lint/EndAlignment:
-  EnforcedStyleAlignWith: variable
 
 Lint/EnsureReturn:
   Enabled: false
@@ -81,5 +81,8 @@ Style/SignalException:
 Style/TrailingCommaInArguments:
   EnforcedStyleForMultiline: no_comma
 
-Style/TrailingCommaInLiteral:
+Style/TrailingCommaInArrayLiteral:
+  EnforcedStyleForMultiline: comma
+
+Style/TrailingCommaInHashLiteral:
   EnforcedStyleForMultiline: comma
