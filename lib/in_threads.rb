@@ -93,7 +93,7 @@ class InThreads < SimpleDelegator
   use :run_in_threads_use_block_result, :for => %w[
     all? any? none? one?
     detect find find_index drop_while take_while
-    partition find_all select reject count
+    partition find_all select filter reject count
     collect map group_by max_by min_by minmax_by sort_by sum uniq
     flat_map collect_concat
   ], :ignore_undefined => true
