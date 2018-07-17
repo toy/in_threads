@@ -33,6 +33,9 @@ Lint/EnsureReturn:
 Lint/RescueException:
   Enabled: false
 
+Lint/UnneededRequireStatement:
+  Enabled: false
+
 Metrics/AbcSize:
   Max: 35
 
