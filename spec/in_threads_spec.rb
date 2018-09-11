@@ -177,6 +177,7 @@ describe InThreads do
             expect do
               enum.in_threads(10).send(method) do |i|
                 fail 'expected' if i == 5
+
                 sleep TestObject::SLEEP_TIME
               end
             end.to raise_error('expected')
@@ -189,6 +190,7 @@ describe InThreads do
             expect do
               enum.in_threads(10).send(method) do |i|
                 fail 'expected' if i == 5
+
                 mutex.synchronize{ started << i }
                 sleep TestObject::SLEEP_TIME
                 mutex.synchronize{ finished << i }

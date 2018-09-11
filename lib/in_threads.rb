@@ -40,6 +40,7 @@ class InThreads < SimpleDelegator
     if thread_count < 2
       fail ArgumentError, '`thread_count` can\'t be less than 2.'
     end
+
     each(&block) if block
   end
 
@@ -59,9 +60,11 @@ class InThreads < SimpleDelegator
     def use(runner, options)
       methods = Array(options[:for])
       fail 'no methods provided using :for option' if methods.empty?
+
       ignore_undefined = options[:ignore_undefined]
       methods.each do |method|
         next if ignore_undefined && !enumerable_method?(method)
+
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
           def #{method}(*args, &block)
             if block
@@ -229,6 +232,7 @@ protected
       pool.finalize
       if (e = pool.exception)
         return e.exit_value if e.is_a?(LocalJumpError) && e.reason == :break
+
         fail e
       end
     end
@@ -248,6 +252,7 @@ protected
         enum_b.send(method, *args) do
           result = results.pop.pop
           break if pool.stop?
+
           result
         end
       end
@@ -261,6 +266,7 @@ protected
       filler.join
       if (e = pool.exception)
         return e.exit_value if e.is_a?(LocalJumpError) && e.reason == :break
+
         fail e
       end
     end
