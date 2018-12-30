@@ -111,6 +111,7 @@ class InThreads < SimpleDelegator
     each_with_object
     chunk chunk_while slice_before slice_after slice_when
     lazy
+    chain
   ].map(&:to_sym)
 
   # Special case method, works by applying `run_in_threads_use_block_result` with

@@ -2,6 +2,8 @@
 
 ## unreleased
 
+* Register `chain` to run without threads [@toy](https://github.com/toy)
+
 ## v1.5.0 (2017-11-17)
 
 * Use thread pool instead of creating a thread for every iteration [@toy](https://github.com/toy)
