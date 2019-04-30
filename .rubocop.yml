@@ -14,7 +14,7 @@ Layout/DotPosition:
 Layout/EndAlignment:
   EnforcedStyleAlignWith: variable
 
-Layout/IndentHash:
+Layout/IndentFirstHashElement:
   EnforcedStyle: consistent
 
 Layout/RescueEnsureAlignment:
@@ -57,9 +57,6 @@ Metrics/LineLength:
 
 Metrics/MethodLength:
   Max: 30
-
-Performance/RedundantBlockCall:
-  Enabled: false
 
 Style/DoubleNegation:
   Enabled: false
