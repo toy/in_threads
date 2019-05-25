@@ -2,6 +2,8 @@
 
 ## unreleased
 
+* Enable frozen string literals [@toy](https://github.com/toy)
+
 ## v1.5.1 (2018-12-30)
 
 * Register `chain` to run without threads [@toy](https://github.com/toy)
