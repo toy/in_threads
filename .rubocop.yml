@@ -33,10 +33,10 @@ Lint/AmbiguousBlockAssociation:
 Lint/EnsureReturn:
   Enabled: false
 
-Lint/RescueException:
+Lint/RedundantRequireStatement:
   Enabled: false
 
-Lint/UnneededRequireStatement:
+Lint/RescueException:
   Enabled: false
 
 Metrics/AbcSize:
