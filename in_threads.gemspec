@@ -23,6 +23,6 @@ Gem::Specification.new do |s|
   s.add_development_dependency 'rspec', '~> 3.0'
   s.add_development_dependency 'rspec-retry', '~> 0.3'
   if RUBY_VERSION >= '2.2'
-    s.add_development_dependency 'rubocop', '~> 0.59'
+    s.add_development_dependency 'rubocop', '~> 0.59', '!= 0.78.0'
   end
 end
