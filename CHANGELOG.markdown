@@ -2,6 +2,8 @@
 
 ## unreleased
 
+* Register `filter_map` to run in threads and `tally` to run without threads (as it doesn't accept block) [@toy](https://github.com/toy)
+
 ## v1.5.3 (2019-07-14)
 
 * Remove deprecated `rubyforge_project` attribute from gemspec [rubygems/rubygems#2436](https://github.com/rubygems/rubygems/pull/2436) [@toy](https://github.com/toy)

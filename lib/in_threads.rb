@@ -101,6 +101,7 @@ class InThreads < SimpleDelegator
     partition find_all select filter reject count
     collect map group_by max_by min_by minmax_by sort_by sum uniq
     flat_map collect_concat
+    filter_map
   ], :ignore_undefined => true
 
   INCOMPATIBLE_METHODS = %w[
@@ -114,6 +115,7 @@ class InThreads < SimpleDelegator
     chunk chunk_while slice_before slice_after slice_when
     lazy
     chain
+    tally
   ].map(&:to_sym)
 
   # Special case method, works by applying `run_in_threads_use_block_result` with
