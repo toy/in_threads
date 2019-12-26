@@ -30,3 +30,4 @@ matrix:
       script: bundle exec travis_check_rubies
   allow_failures:
     - rvm: 'ruby-head'
+    - rvm: 'jruby-9.2.7.0'
