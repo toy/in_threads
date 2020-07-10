@@ -33,6 +33,7 @@ class InThreads < SimpleDelegator
   protected :__getobj__, :__setobj__
 
   attr_reader :enumerable, :thread_count
+
   def initialize(enumerable, thread_count = 10, &block)
     super(enumerable)
     @enumerable, @thread_count = enumerable, thread_count.to_i

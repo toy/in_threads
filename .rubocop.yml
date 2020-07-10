@@ -1,6 +1,7 @@
 AllCops:
   Exclude:
     - '*.gemspec'
+  NewCops: enable
 
 Layout/AccessModifierIndentation:
   EnforcedStyle: outdent
