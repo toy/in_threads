@@ -69,13 +69,13 @@ class InThreads < SimpleDelegator
         next if ignore_undefined && !enumerable_method?(method)
 
         class_eval <<-RUBY, __FILE__, __LINE__ + 1
-          def #{method}(*args, &block)
-            if block
-              #{runner}(:#{method}, *args, &block)
-            else
-              enumerable.#{method}(*args)
-            end
-          end
+          def #{method}(*args, &block)             # def foo_bar(*args, &block)
+            if block                               #   if block
+              #{runner}(:#{method}, *args, &block) #     run_in_threads_method(:foo_bar, *args, &block)
+            else                                   #   else
+              enumerable.#{method}(*args)          #     enumerable.foo_bar(*args)
+            end                                    #   end
+          end                                      # end
         RUBY
       end
     end

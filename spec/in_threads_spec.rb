@@ -153,7 +153,7 @@ describe InThreads do
               fail 'expected'
             end
 
-            expect{ enum.in_threads.send(method){} }.to raise_error('expected')
+            expect{ enum.in_threads.send(method){ nil } }.to raise_error('expected')
           end
 
           it 'handles break', :skip => SKIP_IF_BREAK_IN_THREAD_IS_IGNORED do
