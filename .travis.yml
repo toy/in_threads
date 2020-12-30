@@ -11,9 +11,10 @@ rvm:
   - '2.5.8'
   - '2.6.6'
   - '2.7.2'
+  - '3.0.0'
   - 'ruby-head'
   - 'jruby-9.1.17.0'
-  - 'jruby-9.2.11.1'
+  - 'jruby-9.2.14.0'
 before_install:
   - gem install rubygems-update || gem install rubygems-update --version '< 3'
   - update_rubygems || gem update --system
@@ -29,4 +30,4 @@ matrix:
       script: bundle exec travis_check_rubies
   allow_failures:
     - rvm: 'ruby-head'
-    - rvm: 'jruby-9.2.11.1'
+    - rvm: 'jruby-9.2.14.0'
