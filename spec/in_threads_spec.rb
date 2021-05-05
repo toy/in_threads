@@ -205,15 +205,18 @@ describe InThreads do
           context 'exception order' do
             before do
               stub_const('Order', Queue.new)
+              def Order.releasing
+                fail 'expected'
+              ensure
+                push nil
+              end
             end
 
             it 'passes exception raised during iteration if it happens earlier than in block' do
               def enum.each(&block)
                 5.times(&block)
-                begin
+                Order.releasing do
                   fail 'expected'
-                ensure
-                  Order.push nil
                 end
               end
 
@@ -236,10 +239,8 @@ describe InThreads do
 
               expect do
                 enum.in_threads(10).send(method) do
-                  begin
+                  Order.releasing do
                     fail 'expected'
-                  ensure
-                    Order.push nil
                   end
                 end
               end.to raise_error('expected')
@@ -249,10 +250,8 @@ describe InThreads do
               expect do
                 enum.in_threads(10).send(method) do |i|
                   if i == 5
-                    begin
+                    Order.releasing do
                       fail 'expected'
-                    ensure
-                      Order.push nil
                     end
                   else
                     Thread.pass while Order.empty?
