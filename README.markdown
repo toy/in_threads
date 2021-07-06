@@ -1,5 +1,5 @@
 [![Gem Version](https://img.shields.io/gem/v/in_threads.svg?style=flat)](https://rubygems.org/gems/in_threads)
-[![Build Status](https://github.com/toy/in_threads/actions/workflows/check.yml/badge.svg?branch=master)](https://github.com/toy/in_threads/actions/workflows/check.yml)
+[![Build Status](https://img.shields.io/github/workflow/status/toy/in_threads/check/master?logo=github)](https://github.com/toy/in_threads/actions/workflows/check.yml)
 [![Code Climate](https://img.shields.io/codeclimate/maintainability/toy/in_threads.svg?style=flat)](https://codeclimate.com/github/toy/in_threads)
 [![Depfu](https://badges.depfu.com/badges/0579058f30df655f684aff1be244691e/overview.svg)](https://depfu.com/github/toy/in_threads)
 [![Inch CI](https://inch-ci.org/github/toy/in_threads.svg?branch=master&style=flat)](https://inch-ci.org/github/toy/in_threads)
