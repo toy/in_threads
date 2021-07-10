@@ -1,8 +1,8 @@
-[![Gem Version](https://img.shields.io/gem/v/in_threads.svg?style=flat)](https://rubygems.org/gems/in_threads)
+[![Gem Version](https://img.shields.io/gem/v/in_threads?logo=rubygems)](https://rubygems.org/gems/in_threads)
 [![Build Status](https://img.shields.io/github/workflow/status/toy/in_threads/check/master?logo=github)](https://github.com/toy/in_threads/actions/workflows/check.yml)
-[![Code Climate](https://img.shields.io/codeclimate/maintainability/toy/in_threads.svg?style=flat)](https://codeclimate.com/github/toy/in_threads)
-[![Depfu](https://badges.depfu.com/badges/0579058f30df655f684aff1be244691e/overview.svg)](https://depfu.com/github/toy/in_threads)
-[![Inch CI](https://inch-ci.org/github/toy/in_threads.svg?branch=master&style=flat)](https://inch-ci.org/github/toy/in_threads)
+[![Code Climate](https://img.shields.io/codeclimate/maintainability/toy/in_threads?logo=codeclimate)](https://codeclimate.com/github/toy/in_threads)
+[![Depfu](https://img.shields.io/depfu/toy/in_threads)](https://depfu.com/github/toy/in_threads)
+[![Inch CI](https://inch-ci.org/github/toy/in_threads.svg?branch=master)](https://inch-ci.org/github/toy/in_threads)
 
 # in_threads
 
