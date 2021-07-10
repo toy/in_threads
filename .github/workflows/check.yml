@@ -19,11 +19,14 @@ jobs:
         - '2.6'
         - '2.7'
         - '3.0'
-        - ruby-head
         - jruby-9.1
-        - jruby-9.2
+        include:
+        - ruby: jruby-9.2
+          allow-failure: allow-failure
+        - ruby: ruby-head
+          allow-failure: allow-failure
       fail-fast: false
-    continue-on-error: ${{ matrix.ruby == 'ruby-head' || matrix.ruby == 'jruby-9.2' }}
+    continue-on-error: ${{ matrix.allow-failure && true || false }}
     timeout-minutes: 5
     steps:
     - uses: actions/checkout@v2
