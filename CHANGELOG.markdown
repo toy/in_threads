@@ -2,6 +2,8 @@
 
 ## unreleased
 
+* Register `compact` added in 3.1 to run without threads (as it doesn't accept block) [@toy](https://github.com/toy)
+
 ## v1.5.4 (2019-12-26)
 
 * Register `filter_map` to run in threads and `tally` to run without threads (as it doesn't accept block) [@toy](https://github.com/toy)

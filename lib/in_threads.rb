@@ -117,6 +117,7 @@ class InThreads < SimpleDelegator
     lazy
     chain
     tally
+    compact
   ].map(&:to_sym)
 
   # Special case method, works by applying `run_in_threads_use_block_result` with
