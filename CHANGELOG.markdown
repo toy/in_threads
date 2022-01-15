@@ -2,6 +2,7 @@
 
 ## unreleased
 
+* Switch `to_h` (ruby >= 2.6) and `to_set` to run in threads, they accept block to apply before creating Hash and Set respectively [@toy](https://github.com/toy)
 * Register `compact` added in 3.1 to run without threads (as it doesn't accept block) [@toy](https://github.com/toy)
 
 ## v1.5.4 (2019-12-26)

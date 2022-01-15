@@ -513,8 +513,13 @@ describe InThreads do
         collect map
         group_by max_by min_by minmax_by sort_by
         sum uniq
+        to_h to_set
       ].each do |method|
+        next if method == 'to_h' && !InThreads::TO_H_ACCEPTS_BLOCK
+
         describe_enum_method method do
+          let(:value_proc){ proc{ [rand] * 2 } } if method == 'to_h'
+
           it 'returns same result with threads' do
             expect(enum.in_threads.send(method, &:compute)).
               to eq(enum.send(method, &:compute))

@@ -2,6 +2,7 @@
 
 require 'thread'
 require 'delegate'
+require 'set'
 
 Enumerable.class_eval do
   # Run enumerable method blocks in threads
@@ -87,6 +88,8 @@ class InThreads < SimpleDelegator
     end
   end
 
+  TO_H_ACCEPTS_BLOCK = enumerable_method?(:to_h) && [[0, 0]].to_h{ [1, 1] } == {1 => 1}
+
   use :run_in_threads_ignore_block_result, :for => %w[each]
   use :run_in_threads_ignore_block_result, :for => %w[
     reverse_each
@@ -103,12 +106,13 @@ class InThreads < SimpleDelegator
     collect map group_by max_by min_by minmax_by sort_by sum uniq
     flat_map collect_concat
     filter_map
+    to_set
   ], :ignore_undefined => true
 
   INCOMPATIBLE_METHODS = %w[
     inject reduce
     max min minmax sort
-    entries to_a to_set to_h
+    entries to_a
     drop take
     first
     include? member?
@@ -119,6 +123,12 @@ class InThreads < SimpleDelegator
     tally
     compact
   ].map(&:to_sym)
+
+  if TO_H_ACCEPTS_BLOCK
+    use :run_in_threads_use_block_result, :for => %w[to_h]
+  else
+    INCOMPATIBLE_METHODS << :to_h
+  end
 
   # Special case method, works by applying `run_in_threads_use_block_result` with
   # map on enumerable returned by blockless run
