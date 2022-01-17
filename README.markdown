@@ -25,13 +25,13 @@ gem 'in_threads'
 ...and install it with [Bundler](http://bundler.io).
 
 ```sh
-$ bundle install
+bundle install
 ```
 
 Or install globally:
 
 ```sh
-$ gem install in_threads
+gem install in_threads
 ```
 
 ## Usage
@@ -90,9 +90,20 @@ urls.in_threads.all? { |url| HTTP.get(url).status == 200 }
 urls.in_threads.any? { |url| HTTP.get(url).status == 404 }
 ```
 
-You can call any `Enumerable` method, but some (`#inject`, `#reduce`, `#max`,
-`#min`, `#sort`, `#to_a`, and others) cannot run concurrently, and so will
-simply act as if `in_threads` wasn't used.
+### Compatibility
+
+All methods of `Enumerable` with a block can be used if block calls are evaluated independently, so following will
+
+`all?`, `any?`, `collect_concat`, `collect`, `count`, `cycle`, `detect`, `drop_while`, `each_cons`, `each_entry`,
+`each_slice`, `each_with_index`, `each_with_object`, `each`, `enum_cons`, `enum_slice`, `enum_with_index`,
+`filter_map`, `filter`, `find_all`, `find_index`, `find`, `flat_map`, `group_by`, `map`, `max_by`, `min_by`,
+`minmax_by`, `none?`, `one?`, `partition`, `reject`, `reverse_each`, `select`, `sort_by`, `sum`, `take_while`, `to_h`,
+`to_set`, `uniq`, `zip`.
+
+Following either don't accept block (like `first`), depend on previous block evaluation (like `inject`) or return an enumerator (like `chunk`), so will simply act as if `in_threads` wasn't used:
+
+`chain`, `chunk_while`, `chunk`, `compact`, `drop`, `entries`, `first`, `include?`, `inject`, `lazy`, `max`, `member?`,
+`minmax`, `min`, `reduce`, `slice_after`, `slice_before`, `slice_when`, `sort`, `take`, `tally`, `to_a`.
 
 ### Break and exceptions
 
