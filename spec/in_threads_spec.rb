@@ -725,6 +725,34 @@ describe InThreads do
           end
         end
       end
+
+      describe_enum_method :each_with_object do
+        let(:block) do
+          proc do |o, h|
+            v = o.compute
+            mutex.synchronize{ h[v] = true }
+          end
+        end
+
+        it 'returns same result with threads' do
+          expect(enum.in_threads.each_with_object({}, &block)).
+            to eq(enum.each_with_object({}, &block))
+        end
+
+        it 'yields same objects' do
+          yielded = []
+          enum.in_threads.each_with_object({}) do |o, _h|
+            mutex.synchronize{ yielded << o }
+            o.compute
+          end
+          expect(yielded).to match_array(items)
+        end
+
+        it 'runs faster with threads', :flaky do
+          expect{ enum.in_threads.each_with_object({}, &block) }.
+            to be_faster_than{ enum.each_with_object({}, &block) }
+        end
+      end
     end
 
     context 'unthreaded' do
@@ -780,14 +808,6 @@ describe InThreads do
           it 'returns same result' do
             expect(enum.in_threads.send(method, enum.to_a[10])).to eq(enum.send(method, enum.to_a[10]))
           end
-        end
-      end
-
-      describe_enum_method :each_with_object do
-        let(:block){ proc{ |o, h| h[o] = true } }
-
-        it 'returns same result' do
-          expect(enum.in_threads.each_with_object({}, &block)).to eq(enum.each_with_object({}, &block))
         end
       end
 

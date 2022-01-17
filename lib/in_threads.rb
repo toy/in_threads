@@ -98,6 +98,7 @@ class InThreads < SimpleDelegator
     zip
     cycle
     each_entry
+    each_with_object
   ], :ignore_undefined => true
   use :run_in_threads_use_block_result, :for => %w[
     all? any? none? one?
@@ -116,7 +117,6 @@ class InThreads < SimpleDelegator
     drop take
     first
     include? member?
-    each_with_object
     chunk chunk_while slice_before slice_after slice_when
     lazy
     chain
