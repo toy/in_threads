@@ -515,7 +515,7 @@ describe InThreads do
         sum uniq
         to_h to_set
       ].each do |method|
-        next if method == 'to_h' && !InThreads::TO_H_ACCEPTS_BLOCK
+        next if method == 'to_h' && InThreads::INCOMPATIBLE_METHODS.include?(:to_h)
 
         describe_enum_method method do
           let(:value_proc){ proc{ [rand] * 2 } } if method == 'to_h'
