@@ -24,6 +24,8 @@ jobs:
         include:
         - ruby: jruby-9.2
           allow-failure: allow-failure
+        - ruby: jruby-9.3
+          allow-failure: allow-failure
         - ruby: ruby-head
           allow-failure: allow-failure
       fail-fast: false
