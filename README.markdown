@@ -115,4 +115,4 @@ Exceptions are caught and re-thrown after allowing blocks that are still running
 
 ## Copyright
 
-Copyright (c) 2009-2019 Ivan Kuchin. See LICENSE.txt for details.
+Copyright (c) 2009-2022 Ivan Kuchin. See LICENSE.txt for details.

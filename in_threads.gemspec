@@ -2,7 +2,7 @@
 
 Gem::Specification.new do |s|
   s.name        = 'in_threads'
-  s.version     = '1.5.4'
+  s.version     = '1.6.0'
   s.summary     = %q{Run all possible enumerable methods in concurrent/parallel threads}
   s.homepage    = "https://github.com/toy/#{s.name}"
   s.authors     = ['Ivan Kuchin']
