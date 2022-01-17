@@ -21,11 +21,9 @@ jobs:
         - '3.0'
         - '3.1'
         - jruby-9.1
+        - jruby-9.2
+        - jruby-9.3
         include:
-        - ruby: jruby-9.2
-          allow-failure: allow-failure
-        - ruby: jruby-9.3
-          allow-failure: allow-failure
         - ruby: ruby-head
           allow-failure: allow-failure
       fail-fast: false

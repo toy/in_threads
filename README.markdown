@@ -111,7 +111,7 @@ Exceptions are caught and re-thrown after allowing blocks that are still running
 
 **IMPORTANT**: only the first encountered exception is propagated, so it is recommended to handle exceptions in the block.
 
-`break` is handled in ruby >= 1.9 and should be handled in jruby [after 9.1.9.0](https://github.com/jruby/jruby/issues/4697). Handling is done in special way: as blocks are run outside of original context, calls to `break` cause `LocalJumpError` which is caught and its result is returned.
+`break` is handled in ruby >= 1.9 and should be handled in jruby [9.1 after 9.1.9.0](https://github.com/jruby/jruby/issues/4697) and [9.2 and 9.3 after #7009](https://github.com/jruby/jruby/issues/7009). Handling is done in special way: as blocks are run outside of original context, calls to `break` cause `LocalJumpError` which is caught and its result is returned.
 
 ## Copyright
 
