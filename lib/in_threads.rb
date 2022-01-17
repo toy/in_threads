@@ -35,17 +35,22 @@ class InThreads < SimpleDelegator
 
   attr_reader :enumerable, :thread_count
 
-  def initialize(enumerable, thread_count = 10, &block)
-    super(enumerable)
-    @enumerable, @thread_count = enumerable, thread_count.to_i
-    unless enumerable.is_a?(Enumerable)
-      fail ArgumentError, '`enumerable` should include Enumerable.'
+  def self.new(enumerable, thread_count = 10, &block)
+    if block
+      super.each(&block)
+    else
+      super
     end
-    if thread_count < 2
-      fail ArgumentError, '`thread_count` can\'t be less than 2.'
-    end
+  end
 
-    each(&block) if block
+  def initialize(enumerable, thread_count = 10)
+    super(enumerable)
+
+    @enumerable, @thread_count = enumerable, thread_count.to_i
+
+    fail ArgumentError, '`enumerable` should include Enumerable.' unless enumerable.is_a?(Enumerable)
+
+    fail ArgumentError, '`thread_count` can\'t be less than 2.' if thread_count < 2
   end
 
   # Creates new instance using underlying enumerable and new thread_count

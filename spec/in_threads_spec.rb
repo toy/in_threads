@@ -145,6 +145,13 @@ describe InThreads do
     end
 
     describe 'exception/break handling' do
+      it 'returns identical to each when initialized with block', :skip => SKIP_IF_BREAK_IN_THREAD_IS_IGNORED do
+        v = double
+        expect(enum.each{ break v }).to eq(v) # rubocop:disable Lint/UnreachableLoop
+        expect(enum.in_threads{ break v }).to eq(v)
+        expect(enum.in_threads.each{ break v }).to eq(v) # rubocop:disable Lint/UnreachableLoop
+      end
+
       %w[each map all?].each do |method|
         describe "for ##{method}" do
           it 'passes exception raised in block' do
