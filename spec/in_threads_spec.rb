@@ -45,7 +45,9 @@ def describe_enum_method(method, &block)
 end
 
 class TestObject
-  SLEEP_TIME = 0.002
+  def self.imitate_work
+    sleep 0.002
+  end
 
   def initialize(value)
     @value = value
@@ -56,13 +58,7 @@ class TestObject
   end
 
   def compute
-    wait; @value
-  end
-
-private
-
-  def wait
-    sleep SLEEP_TIME
+    self.class.imitate_work; @value
   end
 end
 
@@ -135,7 +131,7 @@ describe InThreads do
               thread_count += 1
               max_thread_count = [max_thread_count, thread_count].max
             end
-            sleep TestObject::SLEEP_TIME
+            TestObject.imitate_work
             mutex.synchronize do
               thread_count -= 1
             end
@@ -192,7 +188,7 @@ describe InThreads do
               enum.in_threads(10).send(method) do |i|
                 fail 'expected' if i == 5
 
-                sleep TestObject::SLEEP_TIME
+                TestObject.imitate_work
               end
             end.to raise_error('expected')
           end
@@ -206,7 +202,7 @@ describe InThreads do
                 fail 'expected' if i == 5
 
                 mutex.synchronize{ started << i }
-                sleep TestObject::SLEEP_TIME
+                TestObject.imitate_work
                 mutex.synchronize{ finished << i }
               end
             end.to raise_error('expected')
@@ -235,7 +231,7 @@ describe InThreads do
               expect do
                 enum.in_threads(10).send(method) do
                   Thread.pass while Order.empty?
-                  sleep TestObject::SLEEP_TIME
+                  TestObject.imitate_work
                   fail 'unexpected'
                 end
               end.to raise_error('expected')
@@ -245,7 +241,7 @@ describe InThreads do
               def enum.each(&block)
                 5.times(&block)
                 Thread.pass while Order.empty?
-                sleep TestObject::SLEEP_TIME
+                TestObject.imitate_work
                 fail 'unexpected'
               end
 
@@ -267,7 +263,7 @@ describe InThreads do
                     end
                   else
                     Thread.pass while Order.empty?
-                    sleep TestObject::SLEEP_TIME
+                    TestObject.imitate_work
                     fail 'unexpected'
                   end
                 end
@@ -293,7 +289,7 @@ describe InThreads do
       %w[each map all?].each do |method|
         it "for ##{method}" do
           expect(enum).to receive(:each).once.and_call_original
-          enum.in_threads.send(method){ sleep TestObject::SLEEP_TIME }
+          enum.in_threads.send(method){ TestObject.imitate_work }
         end
       end
     end
