@@ -10,7 +10,7 @@ RSpec.configure do |config|
   config.verbose_retry = true
 
   config.around :each, :flaky do |ex|
-    ex.run_with_retry :retry => 3
+    ex.run_with_retry :retry => 5
   end
 end
 
