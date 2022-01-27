@@ -26,6 +26,8 @@ jobs:
         include:
         - ruby: ruby-head
           allow-failure: allow-failure
+        - ruby: jruby-head
+          allow-failure: allow-failure
       fail-fast: false
     continue-on-error: ${{ matrix.allow-failure && true || false }}
     timeout-minutes: 5
