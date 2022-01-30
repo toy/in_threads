@@ -17,16 +17,23 @@ end
 # check if break causes LocalJumpError
 # not in jruby in mri < 1.9
 # https://github.com/jruby/jruby/issues/4697
+class BreakInThreadWorks < StandardError; end
 SKIP_IF_BREAK_IN_THREAD_IS_IGNORED = begin
   proc do |&block|
     Thread.new do
       Thread.current.report_on_exception = false if Thread.current.respond_to?(:report_on_exception=)
-      block.call
+      begin
+        block.call
+      rescue LocalJumpError
+        raise BreakInThreadWorks
+      end
     end.join
   end.call{ break } # rubocop:disable Style/MultilineBlockChain
   'can not handle break in thread'
-rescue LocalJumpError
+rescue BreakInThreadWorks
   false
+rescue LocalJumpError
+  'can not catch LocalJumpError caused by break in passed block in thread'
 end
 
 def describe_enum_method(method, &block)
