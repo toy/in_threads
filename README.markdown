@@ -1,5 +1,6 @@
 [![Gem Version](https://img.shields.io/gem/v/in_threads?logo=rubygems)](https://rubygems.org/gems/in_threads)
 [![Build Status](https://img.shields.io/github/workflow/status/toy/in_threads/check/master?logo=github)](https://github.com/toy/in_threads/actions/workflows/check.yml)
+[![Rubocop](https://img.shields.io/github/workflow/status/toy/in_threads/rubocop/master?label=rubocop&logo=rubocop)](https://github.com/toy/in_threads/actions/workflows/rubocop.yml)
 [![Code Climate](https://img.shields.io/codeclimate/maintainability/toy/in_threads?logo=codeclimate)](https://codeclimate.com/github/toy/in_threads)
 [![Depfu](https://img.shields.io/depfu/toy/in_threads)](https://depfu.com/github/toy/in_threads)
 [![Inch CI](https://inch-ci.org/github/toy/in_threads.svg?branch=master)](https://inch-ci.org/github/toy/in_threads)
