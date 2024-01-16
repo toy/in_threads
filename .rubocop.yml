@@ -60,6 +60,9 @@ Metrics/CyclomaticComplexity:
 Metrics/MethodLength:
   Max: 30
 
+Style/ArgumentsForwarding:
+  Enabled: false
+
 Style/DoubleNegation:
   Enabled: false
 
