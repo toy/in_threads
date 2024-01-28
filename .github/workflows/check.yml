@@ -30,7 +30,7 @@ jobs:
     continue-on-error: ${{ matrix.allow-failure && true || false }}
     timeout-minutes: 5
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: ruby/setup-ruby@v1
       with:
         ruby-version: "${{ matrix.ruby }}"
@@ -49,6 +49,6 @@ jobs:
         - ruby:2.2
       fail-fast: false
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - run: bundle install
     - run: bundle exec rspec --format documentation
