@@ -460,7 +460,7 @@ describe InThreads do
         detect find find_index drop_while take_while
       ].each do |method|
         describe_enum_method method do
-          let(:value_proc){ proc{ |i| i.odd? } }
+          let(:value_proc){ proc(&:odd?) }
 
           it 'returns same result with threads' do
             expect(enum.in_threads.send(method, &:compute)).
