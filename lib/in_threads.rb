@@ -31,7 +31,7 @@ end
 
 # Run Enumerable methods with blocks in threads
 class InThreads < SimpleDelegator
-  protected :__getobj__, :__setobj__ # rubocop:disable Style/AccessModifierDeclarations
+  protected :__getobj__, :__setobj__
 
   attr_reader :enumerable, :thread_count
 
