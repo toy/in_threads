@@ -51,7 +51,7 @@ def describe_enum_method(method, &block)
   end
 end
 
-class TestObject
+TestObject = Class.new do
   def self.imitate_work
     sleep 0.002
   end
